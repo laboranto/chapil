@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% set active = "other" %}
+{% block body %}
+<div class="topbar">
+  <h1>기타 지출</h1>
+  <a href="/other/new"><button class="btn-add">+ 추가</button></a>
+</div>
+<div class="content">
+  {% for r in rows %}
+  <div class="card">
+    <div class="card-row">
+      <div>
+        <div class="card-title">{{ r.item }}</div>
+        <div class="card-sub">{{ r.date }}{% if r.odometer %} · {{ r.odometer | int }}km{% endif %}</div>
+      </div>
+      <div class="card-amount">{% if r.amount %}{{ "{:,}".format(r.amount) }}원{% else %}-{% endif %}</div>
+    </div>
+    {% if r.memo %}
+    <div class="card-meta"><span>{{ r.memo }}</span></div>
+    {% endif %}
+    <div class="card-actions">
+      <a href="/other/{{ r.id }}/edit"><button class="btn-sm btn-edit">수정</button></a>
+      <form method="post" action="/other/{{ r.id }}/delete" style="display:inline" onsubmit="return confirm('삭제할까요?')">
+        <button class="btn-sm btn-del" type="submit">삭제</button>
+      </form>
+    </div>
+  </div>
+  {% else %}
+  <div class="empty">기타 지출 기록이 없어요</div>
+  {% endfor %}
+</div>
+{% endblock %}

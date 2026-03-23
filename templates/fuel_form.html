@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% set active = "fuel" %}
+{% block body %}
+<div class="topbar"><h1>{% if record %}주유 수정{% else %}주유 기록{% endif %}</h1></div>
+<div class="content">
+  <form method="post">
+    <div class="form-group">
+      <label>날짜</label>
+      <input type="date" name="date" required value="{{ record.date if record else '' }}">
+    </div>
+    <div class="form-group">
+      <label>구분</label>
+      <div class="select-wrap">
+        <select name="type">
+          {% for t in ['가득주유', '부분주유'] %}
+          <option value="{{ t }}" {% if record and record.type == t %}selected{% endif %}>{{ t }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>금액 (원)</label>
+      <input type="number" name="amount" inputmode="numeric" required value="{{ record.amount if record else '' }}">
+    </div>
+    <div class="form-group">
+      <label>단가 (원/L)</label>
+      <input type="number" name="unit_price" inputmode="numeric" value="{{ record.unit_price if record else '' }}">
+    </div>
+    <div class="form-group">
+      <label>주유량 (L)</label>
+      <input type="number" name="liters" step="0.001" inputmode="decimal" value="{{ record.liters if record else '' }}">
+    </div>
+    <div class="form-group">
+      <label>누적 주행거리 (km)</label>
+      <input type="number" name="odometer" inputmode="numeric" required value="{{ record.odometer if record else last_odometer }}">
+    </div>
+    <div class="form-group">
+      <label>메모</label>
+      <textarea name="memo">{{ record.memo if record else '' }}</textarea>
+    </div>
+    <button type="submit" class="btn-submit">저장</button>
+  </form>
+  <a href="/fuel" class="btn-cancel">취소</a>
+</div>
+{% endblock %}

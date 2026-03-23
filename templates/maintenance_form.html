@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% set active = "maint" %}
+{% block body %}
+<div class="topbar"><h1>{% if record %}정비 수정{% else %}정비 기록{% endif %}</h1></div>
+<div class="content">
+  <form method="post">
+    <div class="form-group">
+      <label>날짜</label>
+      <input type="date" name="date" required value="{{ record.date if record else '' }}">
+    </div>
+    <div class="form-group">
+      <label>항목</label>
+      <div class="select-wrap">
+        <select name="item">
+          {% for i in items %}
+          <option value="{{ i }}" {% if record and record.item == i %}selected{% endif %}>{{ i }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>금액 (원, 없으면 0)</label>
+      <input type="number" name="amount" inputmode="numeric" value="{{ record.amount if record else '0' }}">
+    </div>
+    <div class="form-group">
+      <label>누적 주행거리 (km)</label>
+      <input type="number" name="odometer" inputmode="numeric" required value="{{ record.odometer if record else last_odometer }}">
+    </div>
+    <div class="form-group">
+      <label>메모</label>
+      <textarea name="memo">{{ record.memo if record else '' }}</textarea>
+    </div>
+    <button type="submit" class="btn-submit">저장</button>
+  </form>
+  <a href="/maintenance" class="btn-cancel">취소</a>
+</div>
+{% endblock %}
