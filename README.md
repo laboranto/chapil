@@ -3,6 +3,13 @@
 광고 없는 오픈소스 차계부 모바일 앱입니다.
 한국에서 널리 쓰이는 상용 앱(마OO)을 대체하기 위해 만들게 되었습니다.
 
+## 기술 스택
+- Backend: FastAPI (Python)
+- Database: SQLite
+- Template: Jinja2
+- Infra: Docker, Docker Compose, Tailscale VPN
+- License: LGPL
+
 ## 디렉토리 구조
 
 ```
