@@ -76,4 +76,4 @@ docker compose up -d --build
 
 # 스크린샷
 ### v26.3.30a
-![[Pasted screenshot_v260330b.jpg]]
+![26.03.30 알파버전 실행 화면. 주유 탭에 활성화 되어 있고, 목록에는 주유 기록이 나열되어 있다. 연비가 표시되어 있으며, 수정 버튼과 삭제 버튼도 각 기록마다 존재한다.](screenshot_v260330b.jpg)
