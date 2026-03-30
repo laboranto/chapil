@@ -181,6 +181,38 @@ def fuel_update(
         "UPDATE fuel SET date=?, type=?, amount=?, unit_price=?, liters=?, odometer=?, memo=? WHERE id=?",
         (date, type, amount, unit_price, liters, odometer, memo, record_id),
     )
+    # 앞뒤 기록을 감지하여 다시 계산
+    prev = conn.execute(
+        "SELECT odometer, liters FROM fuel WHERE date <= ? AND id != ? ORDER BY date DESC, id DESC LIMIT 1",
+        (date, record_id)
+    ).fetchone()
+    next_ = conn.execute(
+        "SELECT id, odometer, liters FROM fuel WHERE date >= ? AND id != ? ORDER BY date ASC, id ASC LIMIT 1",
+        (date, record_id)
+    ).fetchone()
+
+    interval_km = None
+    fuel_economy = None
+    if prev:
+        interval_km = odometer - prev["odometer"]
+        if liters and liters > 0 and interval_km > 0:
+            fuel_economy = round(interval_km / liters, 2)
+
+    conn.execute(
+        "UPDATE fuel SET interval_km=?, fuel_economy=? WHERE id=?",
+        (interval_km, fuel_economy, record_id)
+    )
+
+    # 다음 기록에서도 다시 계산
+    if next_:
+        next_interval = next_["odometer"] - odometer
+        next_economy = None
+        if next_["liters"] and next_["liters"] > 0 and next_interval > 0:
+            next_economy = round(next_interval / next_["liters"], 2)
+        conn.execute(
+            "UPDATE fuel SET interval_km=?, fuel_economy=? WHERE id=?",
+            (next_interval, next_economy, next_["id"])
+        )
     conn.commit()
     conn.close()
     return RedirectResponse("/fuel", status_code=303)

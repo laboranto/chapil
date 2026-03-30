@@ -1,3 +1,4 @@
+<!-- 주유 기록 양식 -->
 {% extends "base.html" %}
 {% set active = "fuel" %}
 {% block body %}
@@ -36,10 +37,44 @@
     </div>
     <div class="form-group">
       <label>메모</label>
-      <textarea name="memo">{{ record.memo if record else '' }}</textarea>
+      <textarea name="memo">{{ record.memo or '' }}</textarea>
     </div>
     <button type="submit" class="btn-submit">저장</button>
   </form>
   <a href="/fuel" class="btn-cancel">취소</a>
 </div>
+
+<!-- 자동완성 기능 -->
+<script>
+// 날짜 자동 입력
+const dateInput = document.querySelector('[name="date"]');
+if (!dateInput.value) {
+  dateInput.value = new Date().toISOString().split('T')[0];
+}
+
+// 입력값 선언
+const amount = document.querySelector('[name="amount"]');
+const unit_price = document.querySelector('[name="unit_price"]');
+const liters = document.querySelector('[name="liters"]');
+
+// 입력된 부동소수값 전달
+  function calc(changed) {
+    const val_amount = parseFloat(amount.value) ;
+    const val_unit_price = parseFloat(unit_price.value) ;
+    const val_liters = parseFloat(liters.value) ;
+
+    // 기존 값이 변경(changed)되면 다시 계산
+    if (changed === 'amount' || changed === 'unit_price'){
+      if (val_amount && val_unit_price) liters.value = (val_amount / val_unit_price).toFixed(2) ;
+    } else if (changed === 'liters') {
+      if (val_amount && val_liters) unit_price.value = Math.round(val_amount / val_liters);
+      else if (val_unit_price && val_liters) amount.value = Math.round(val_unit_price * val_liters);
+    }
+  }
+
+// 사용자의 변경을 감지
+  amount.addEventListener('change', () => calc('amount'));
+  unit_price.addEventListener('change', () => calc('unit_price'));
+  liters.addEventListener('change', () => calc('liters'));
+</script>
 {% endblock %}
