@@ -2,10 +2,10 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#1a1a2e">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <title>차계부</title>
+  <title>차필</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -18,9 +18,10 @@
       --text-sub: #6e6e73;
       --border: #e0e0e5;
       --radius: 12px;
-      --nav-h: 56px;
+      --nav-h: 64px;
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
     }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding-bottom: calc(var(--nav-h) + 16px); }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding-bottom: calc(var(--nav-h) + var(--safe-bottom) + 16px); }
     a { color: inherit; text-decoration: none; }
 
     /* 상단 헤더 */
@@ -70,10 +71,10 @@
     .summary-card .unit { font-size: 13px; color: var(--text-sub); font-weight: 400; }
 
     /* 하단 탭 네비게이션 */
-    .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; height: var(--nav-h); background: var(--card); border-top: 1px solid var(--border); display: flex; z-index: 200; }
-    .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; color: var(--text-sub); font-size: 10px; font-weight: 500; }
+    .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; height: calc(var(--nav-h) + var(--safe-bottom)); padding-bottom: var(--safe-bottom); background: var(--card); border-top: 1px solid var(--border); display: flex; z-index: 200; }
+    .nav-item { flex: 1; display: flex; flex-direction: column; height: var(--nav-h); align-items: center; justify-content: center; gap: 3px; color: var(--text-sub); font-size: 10px; font-weight: 500; }
     .nav-item.active { color: var(--primary); }
-    .nav-item svg { width: 22px; height: 22px; }
+    .nav-item svg { width: 28px; height: 28px; stroke: none; fill: currentColor; stroke-width: 2;}
 
     /* 섹션 헤더 */
     .section-header { font-size: 13px; font-weight: 600; color: var(--text-sub); text-transform: uppercase; letter-spacing: .5px; margin: 16px 0 8px; }
@@ -88,21 +89,43 @@
 <body>
   {% block body %}{% endblock %}
 
+  <!-- 하단 바 -->
   <nav class="bottom-nav">
     <a href="/" class="nav-item {% if active=='home' %}active{% endif %}">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      <svg><path d="M 13.229167,3.0258727 23.8125,11.90625 V 23.8125 H 2.6458333 V 11.90625 Z" /></svg>
       홈
     </a>
     <a href="/fuel" class="nav-item {% if active=='fuel' %}active{% endif %}">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 22V8l9-6 9 6v14"/><path d="M16.5 22V12h-9v10"/><line x1="12" y1="12" x2="12" y2="22"/></svg>
+      <svg>
+        <path d="M 16.993597,2.7622316 10.671838,16.719765 a 6.7054911,5.2340112 0 0 0 -0.383733,1.744501 6.7054911,5.2340112 0 0 0 6.705492,5.234009 6.7054911,5.2340112 0 0 0 6.70549,-5.234009 6.7054911,5.2340112 0 0 0 -0.383732,-1.744501 z" />
+        <path d="M 8.4951924,2.5022191 2.5022029,8.5139708 h 2.082244 L 2.7555558,14.52572 8.748155,8.5139708 H 6.6663014 Z" />
+      </svg>
       주유
     </a>
     <a href="/maintenance" class="nav-item {% if active=='maint' %}active{% endif %}">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+      <svg>
+        <path d="M 6.3874622,5.6318148 C 4.8424249,7.4958467 4.9437606,10.684295 6.1544788,12.78094 7.3649793,14.877442 10.312,15.676129 12.698589,15.270142 l 4.933158,8.544477 4.045629,-2.335744 -4.933158,-8.544477 C 18.28911,11.070542 19.070938,8.1190039 17.860564,6.0224284 16.650175,3.9255941 13.939565,2.2436101 11.552747,2.649637 l 2.342179,5.3496373 -4.0456299,2.3357447 z" />
+    </svg>
       정비
     </a>
     <a href="/other" class="nav-item {% if active=='other' %}active{% endif %}">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+     <svg>
+      <ellipse
+       cx="4.8820925"
+       cy="13.508565"
+       rx="2.2362595"
+       ry="2.2362614" />
+      <ellipse
+       cx="13.23063"
+       cy="13.508565"
+       rx="2.2362595"
+       ry="2.2362614" />
+      <ellipse
+       cx="21.579176"
+       cy="13.508565"
+       rx="2.2362595"
+       ry="2.2362614" />
+      </svg>
       기타
     </a>
   </nav>
