@@ -6,6 +6,7 @@ RUN pip install --no-cache-dir fastapi uvicorn jinja2 python-multipart odfpy
 
 COPY app/ /app/
 COPY templates/ /app/templates/
+COPY static/ /app/static/
 
 RUN mkdir -p /data
 

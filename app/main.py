@@ -8,6 +8,7 @@ from typing import Optional
 from datetime import date
 
 app = FastAPI(title="차계부")
+app.mount("/static", StaticFiles(directory="/app/static"), name="static")
 templates = Jinja2Templates(directory="/app/templates")
 
 MAINTENANCE_ITEMS = [
