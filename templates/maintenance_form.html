@@ -1,7 +1,13 @@
 {% extends "base.html" %}
 {% set active = "maint" %}
 {% block body %}
-<div class="topbar"><h1>{% if record %}정비 수정{% else %}정비 기록{% endif %}</h1></div>
+<div class="topbar">
+    <a href="/maintenance">
+          <button class="btn-cancel">취소</button>
+    </a>
+          <button type="submit" class="btn-submit">저장</button>
+</div>
+<div class="topbg"></div>
 <div class="content">
   <form method="post">
     <div class="form-group">
@@ -30,8 +36,6 @@
       <label>메모</label>
       <textarea name="memo">{{ record.memo if record else '' }}</textarea>
     </div>
-    <button type="submit" class="btn-submit">저장</button>
   </form>
-  <a href="/maintenance" class="btn-cancel">취소</a>
 </div>
 {% endblock %}

@@ -1,8 +1,15 @@
-<!-- 주유 기록 양식 -->
 {% extends "base.html" %}
 {% set active = "fuel" %}
 {% block body %}
-<div class="topbar"><h1>{% if record %}주유 수정{% else %}주유 기록{% endif %}</h1></div>
+<!-- 확인 버튼 -->
+<div class="topbar">
+    <a href="/fuel">
+          <button class="btn-cancel">취소</button>
+    </a>
+          <button type="submit" class="btn-submit">저장</button>
+</div>
+<div class="topbg"></div>
+<!-- 주유 기록 양식 -->
 <div class="content">
   <form method="post">
     <div class="form-group">
@@ -38,10 +45,8 @@
     <div class="form-group">
       <label>메모</label>
       <textarea name="memo">{{ record.memo or '' }}</textarea>
+        </form>
     </div>
-    <button type="submit" class="btn-submit">저장</button>
-  </form>
-  <a href="/fuel" class="btn-cancel">취소</a>
 </div>
 
 <!-- 자동완성 기능 -->
