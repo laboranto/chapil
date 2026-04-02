@@ -1,6 +1,9 @@
 {% extends "base.html" %}
 {% set active = "maint" %}
 {% block body %}
+<!-- 정비 기록 양식 -->
+<form method="post">
+<!-- 상단 버튼 -->
 <div class="topbar">
     <a href="/maintenance">
           <button class="btn-cancel">취소</button>
@@ -8,8 +11,8 @@
           <button type="submit" class="btn-submit">저장</button>
 </div>
 <div class="topbg"></div>
+<!-- 양식 본문 -->
 <div class="content">
-  <form method="post">
     <div class="form-group">
       <label>날짜</label>
       <input type="date" name="date" required value="{{ record.date if record else '' }}">
@@ -36,6 +39,6 @@
       <label>메모</label>
       <textarea name="memo">{{ record.memo if record else '' }}</textarea>
     </div>
-  </form>
 </div>
+</form>
 {% endblock %}
