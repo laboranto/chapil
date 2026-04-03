@@ -63,8 +63,9 @@ docker compose up -d --build
 
 # 업데이트 기록
 ### v26.4.3a
-- jinja2 템블릿 기반 MPA에서 FastAPI REST API로 전환하였습니다.
-- html/css/js 프론트엔드가 React로 대체되었습니다.
+- [백엔드] jinja2 템블릿 기반 MPA에서 FastAPI REST API로 전환하였습니다.
+- [프론트엔드]html/css/js에서 React 기반으로 대체되었습니다.
+- [최적화] react-router-dom을 활용하여 SPA(Single Page Application) 방식으로 구동하도록 개선하였습니다.
 ### v26.4.2a
 - UI를 개편하였습니다.
 - 홈 탭의 맨 위에 '🚗차계부' 문구를 '요약'으로 대체하였습니다.
