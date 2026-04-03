@@ -63,7 +63,7 @@ docker compose up -d --build
 
 # 업데이트 기록
 ### v26.4.3a
-- [백엔드] jinja2 템블릿 기반 MPA에서 FastAPI REST API로 전환하였습니다.
+- [백엔드] jinja2 템플릿 기반 MPA에서 FastAPI REST API로 전환하였습니다.
 - [프론트엔드]html/css/js에서 React 기반으로 대체되었습니다.
 - [최적화] react-router-dom을 활용하여 SPA(Single Page Application) 방식으로 구동하도록 개선하였습니다.
 ### v26.4.2a
