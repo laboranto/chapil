@@ -3,23 +3,18 @@
 한국에서 널리 쓰이는 상용 앱(마OO)을 대체하기 위해 만들게 되었습니다.
 
 ## 기술 스택
-- Backend: FastAPI (Python)
+- Backend: FastAPI (Python) Rest API
 - Database: SQLite
-- Template: Jinja2
+- Frontend: React
 - Infra: Docker, Docker Compose, Tailscale VPN
 - License: LGPL
 
 ## 디렉토리 구조
 ```
 chapil/
-├── app/
-│   ├── main.py        # FastAPI 앱
-│   ├── database.py    # DB 초기화
-│   └── migrate.py     # ODS 마이그레이션
-├── static/                 # 아이콘 관련
-├── templates/         # Jinja2 HTML 템플릿
-├── data/              # SQLite DB 저장 위치 
-(자동 생성)
+├── app/                              # Python 백엔드
+├── frontend/                      # React 프론트엔드
+├── data/carlog.db              # SQLite DB (자동 생성)
 ├── Dockerfile
 └── docker-compose.yml
 ```
@@ -49,7 +44,7 @@ docker compose up -d
 
 ### 4. 접속
 모바일 앱 특성상 어디서든 접속해야 사용이 가능하므로, 안전을 위해 공유기 포트포워딩은 하지 마시고 VPN을 이용하실 것을 권장드립니다.
-저는 Tailscale을 활용하였습니다.
+테스트 된 VPN 환경은 Tailscale입니다.
 
 Tailscale IP로 접속:  
 `http://100.x.x.x:8000`
@@ -67,6 +62,9 @@ docker compose up -d --build
 `data/`하위에 있는 .db 파일 하나만 보관해 주십시오.
 
 # 업데이트 기록
+### v26.4.3a
+- jinja2 템블릿 기반 MPA에서 FastAPI REST API로 전환하였습니다.
+- html/css/js 프론트엔드가 React로 대체되었습니다.
 ### v26.4.2a
 - UI를 개편하였습니다.
 - 홈 탭의 맨 위에 '🚗차계부' 문구를 '요약'으로 대체하였습니다.
