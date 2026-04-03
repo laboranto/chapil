@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <!-- viewport-fit=cover: 노치/홈 인디케이터 영역까지 앱이 확장되도록 한다 (safe-area CSS 변수와 함께 작동) -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover" />
+
+    <!-- PWA: 홈 화면에 추가했을 때 브라우저 UI 없이 전체 화면으로 실행 -->
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="차필" />
+
+    <!-- 상단 상태바 색상 -->
+    <meta name="theme-color" content="#ffffff" />
+
+    <!-- 파비콘 -->
+    <link rel="icon" type="image/svg+xml" href="/icons/icon_light.svg" />
+    <!-- iOS 홈 화면 아이콘 -->
+    <link rel="apple-touch-icon" href="/icons/icon_light.png" />
+    <!-- PWA manifest -->
+    <link rel="manifest" href="/manifest.json" />
+
+    <title>차필_ 기본에 충실한 차계부</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
