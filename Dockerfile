@@ -27,8 +27,8 @@ RUN pip install --no-cache-dir fastapi uvicorn
 COPY app/ /app/
 
 # 정적 파일 (아이콘, manifest 등) — 환경변수로 경로를 알려준다
-ENV STATIC_DIR=/app/static
-COPY static/ /app/static/
+ENV STATIC_DIR=/frontend/public
+# COPY static/ /app/static/
 
 # Stage 1의 빌드 결과물만 복사 (Node.js 자체는 포함되지 않음)
 COPY --from=frontend-build /frontend/dist/ /app/frontend/dist/
