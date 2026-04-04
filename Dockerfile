@@ -32,6 +32,7 @@ ENV STATIC_DIR=/frontend/public
 
 # Stage 1의 빌드 결과물만 복사 (Node.js 자체는 포함되지 않음)
 COPY --from=frontend-build /frontend/dist/ /app/frontend/dist/
+COPY --from=frontend-build /frontend/public/ /frontend/public/
 
 RUN mkdir -p /data
 

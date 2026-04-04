@@ -7,5 +7,7 @@ services:
     restart: unless-stopped
     ports:
       - "8000:8000"
+    environment:
+      - DB_PATH=/data/carlog.db
     volumes:
       - ./data:/data
