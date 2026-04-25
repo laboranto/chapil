@@ -43,6 +43,19 @@ export const api = {
   deleteOther:   (id)      => req('DELETE', `/api/other/${id}`),
 
   // 설정
-  getSettings:    ()     => req('GET', '/api/settings'),
-  updateSettings: (data) => req('PUT', '/api/settings', data),
+  getSettings:        ()     => req('GET', '/api/settings'),
+  updateSettings:     (data) => req('PUT', '/api/settings', data),
+  getSettingsOptions: ()     => req('GET', '/api/settings/options'),
+
+  // 데이터 가져오기
+  getImportPrompt:   ()     => req('GET',  '/api/import/prompt'),
+  importPreview:     (data) => req('POST', '/api/import/preview', data),
+  importConfirm:     (data) => req('POST', '/api/import/confirm', data),
+
+  // 데이터 내보내기 — 파일 다운로드이므로 fetch 대신 직접 URL 사용
+  // 사용법: window.location.href = api.exportUrl()
+  exportUrl: () => '/api/export',
+
+  // 예제 파일 다운로드 URL
+  templateUrl: () => '/api/import/template',
 }

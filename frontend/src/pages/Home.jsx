@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import { api } from '../api'
+import { NavLink } from 'react-router-dom'
 
-// fmt: 숫자를 한국식 천 단위 구분 형식으로 변환한다. (예: 50000 → "50,000")
+// fmt: 숫자를 천 단위 구분 형식으로 변환한다. (예: 50000 → "50,000")
 const fmt = (n) => Number(n).toLocaleString('ko-KR')
 
 export default function Home() {
@@ -14,13 +15,19 @@ export default function Home() {
     api.getDashboard().then(setData)
   }, [])
 
-  if (!data) return <div className="content"><div className="empty">불러오는 중…</div></div>
+  if (!data) return <div className="content"><div className="empty">비어있음</div></div>
 
   const last = data.recent_fuel[0] ?? null
 
   return (
     <>
-      <div className="topbar"><h1>요약</h1></div>
+      <div className="topbar">
+        <h1>요약</h1>
+        {/* 설정 페이지 바로가기 */}
+        <NavLink to="/settings" className="setting-btn">
+          설정
+        </NavLink>
+      </div>
       <div className="topbg"></div>
       <div className="content">
 

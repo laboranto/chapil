@@ -1,13 +1,15 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from contextlib import asynccontextmanager
-from pydantic import BaseModel
-from typing import Optional
+from pydantic import BaseModel, field_validator
+from typing import Optional, List
 from datetime import date
 from pathlib import Path
+from enum import Enum
 import os
+import json
 from database import get_db, init_db
 
 BASE_DIR = Path(__file__).parent
@@ -77,6 +79,174 @@ OTHER_ITEMS = [
 ]
 
 
+# ── 차량 정보 Enum ────────────────────────────────────────────────────
+
+class CarType(str, Enum):
+    MICROCAR = "microcar"    # 경차
+    SMALL    = "small"       # 소형차
+    COMPACT  = "compact"     # 준중형차
+    MIDSIZE  = "midsize"     # 중형차
+    LARGE    = "large"       # 준대형차
+    FULLSIZE = "fullsize"    # 대형차
+    SUV      = "suv"         # SUV
+    RV       = "rv"          # RV
+    VAN      = "van"         # 밴
+    TRUCK    = "truck"       # 트럭
+    OTHER    = "other"       # 기타
+
+
+class CarFuel(str, Enum):
+    # 주유 계열 — 백엔드 로직 동일, 프론트 용어 "주유", 단위 L
+    GASOLINE = "gasoline"    # 휘발유
+    DIESEL   = "diesel"      # 경유
+    HEV      = "hev"         # 하이브리드 (자동충전, 주유만)
+    # 충전 계열 — 백엔드 로직 동일, 프론트 용어 "충전", 단위 상이
+    LPG      = "lpg"         # LPG (단위: L)
+    EV       = "ev"          # 전기 (단위: kWh, 효율명: 전비)
+    FCEV     = "fcev"        # 수소전지 (단위: kg)
+    # TODO: 복합 로직 필요 — 추후 별도 구현
+    BIFUEL   = "bifuel"      # 바이퓨얼 (휘발유+LPG) — 기록 분리 필요
+    PHEV     = "phev"        # 플러그인 하이브리드 — 주유+충전 병존
+
+
+# 선택지 목록 — GET /api/settings/options 에서 반환
+# ui_term: 프론트에서 '주유 기록' 탭/버튼에 표시할 용어
+# qty_unit: 수량 입력 단위
+# price_unit: 단가 단위
+# economy_unit: 효율 단위
+# economy_label: 효율 명칭 (연비 vs 전비)
+CAR_TYPE_OPTIONS = [
+    {"code": "microcar",  "label": "경차"},
+    {"code": "small",     "label": "소형차"},
+    {"code": "compact",   "label": "준중형차"},
+    {"code": "midsize",   "label": "중형차"},
+    {"code": "large",     "label": "준대형차"},
+    {"code": "fullsize",  "label": "대형차"},
+    {"code": "suv",       "label": "SUV"},
+    {"code": "rv",        "label": "RV"},
+    {"code": "van",       "label": "밴"},
+    {"code": "truck",     "label": "트럭"},
+    {"code": "other",     "label": "기타"},
+]
+
+CAR_FUEL_OPTIONS = [
+    {"code": "gasoline", "label": "휘발유",           "ui_term": "주유", "qty_unit": "L",   "price_unit": "원/L",   "economy_unit": "km/L",   "economy_label": "연비"},
+    {"code": "diesel",   "label": "경유",             "ui_term": "주유", "qty_unit": "L",   "price_unit": "원/L",   "economy_unit": "km/L",   "economy_label": "연비"},
+    {"code": "hev",      "label": "하이브리드",        "ui_term": "주유", "qty_unit": "L",   "price_unit": "원/L",   "economy_unit": "km/L",   "economy_label": "연비"},
+    {"code": "lpg",      "label": "LPG",              "ui_term": "충전", "qty_unit": "L",   "price_unit": "원/L",   "economy_unit": "km/L",   "economy_label": "연비"},
+    {"code": "ev",       "label": "전기",             "ui_term": "충전", "qty_unit": "kWh", "price_unit": "원/kWh", "economy_unit": "km/kWh", "economy_label": "전비"},
+    {"code": "fcev",     "label": "수소전지",          "ui_term": "충전", "qty_unit": "kg",  "price_unit": "원/kg",  "economy_unit": "km/kg",  "economy_label": "연비"},
+    {"code": "bifuel",   "label": "바이퓨얼 (휘발유+LPG)", "ui_term": "주유", "qty_unit": "L", "price_unit": "원/L", "economy_unit": "km/L",   "economy_label": "연비"},  # TODO
+    {"code": "phev",     "label": "플러그인 하이브리드", "ui_term": "주유", "qty_unit": "L",  "price_unit": "원/L",   "economy_unit": "km/L",   "economy_label": "연비"},  # TODO
+]
+
+
+# ── 데이터 가져오기/내보내기 상수 ─────────────────────────────────────────
+
+# LLM에게 전달할 변환 프롬프트. 출력 포맷을 명시적으로 고정한다.
+IMPORT_PROMPT = """\
+아래는 차계부 앱 "차필"의 데이터 가져오기 형식입니다.
+첨부한 파일(기존 차계부 앱에서 내보낸 파일)과 예제 파일(chapil_template.json)을 참고해서,
+기존 데이터를 아래 JSON 형식으로 변환해 주세요.
+변환 결과는 코드 블록(```json) 안에 출력하거나, JSON 파일로 제공해 주세요.
+
+[출력 형식]
+{
+  "vehicle": { 차량 기본 정보 },
+  "fuel": [ 주유 기록 배열 ],
+  "maintenance": [ 정비 기록 배열 ],
+  "other": [ 기타 지출 배열 ]
+}
+
+[vehicle - 차량 기본 정보 필드]
+• car_type: 차종 (경차/소형차/준중형차/중형차/준대형차/대형차/SUV/RV/밴/트럭/기타)
+• car_brand: 브랜드, 문자열 (예: 현대, 기아, BMW)
+• car_model: 차량 이름, 문자열 (예: 모닝, 코나, 아이오닉5)
+• car_plate: 차량등록번호, 문자열 (예: 123가4567)
+• car_birth: 출고일자, YYYY-MM-DD 형식
+• car_fuel: 연료 종류 (휘발유/경유/LPG/바이퓨얼/전기/플러그인하이브리드/수소전지)
+
+[fuel - 주유 기록 필드]
+• date: 날짜, YYYY-MM-DD 형식 (필수)
+• type: "가득주유" 또는 "부분주유" (기본값: "가득주유")
+• amount: 주유 금액, 원 단위 정수 (필수)
+• unit_price: 리터당 단가, 원 단위 정수, 없으면 null
+• liters: 주유량, 리터 단위 실수, 없으면 null
+• odometer: 누적 주행거리, km 단위 정수 (필수)
+• memo: 메모 문자열, 없으면 ""
+
+[maintenance - 정비 기록 필드]
+• date: 날짜, YYYY-MM-DD 형식 (필수)
+• item: 정비 항목 이름, 문자열 (필수)
+• amount: 정비 비용, 원 단위 정수, 없으면 0
+• odometer: 주행거리, km 단위 정수 (필수)
+• memo: 메모 문자열, 없으면 ""
+
+[other - 기타 지출 필드]
+• date: 날짜, YYYY-MM-DD 형식 (필수)
+• item: 지출 항목 이름, 문자열 (필수)
+• amount: 금액, 원 단위 정수, 없으면 0
+• odometer: 주행거리, km 단위 정수, 없으면 null
+• memo: 메모 문자열, 없으면 ""
+
+[변환 규칙]
+• 날짜는 반드시 YYYY-MM-DD 형식으로 변환할 것
+• 금액·거리의 콤마, 단위 문자(원, km, L 등)는 제거하고 숫자만 남길 것
+• 해당 카테고리에 데이터가 없으면 빈 배열 []로 출력할 것
+• id, interval_km, fuel_economy, created_at 필드는 출력하지 않아도 됨\
+"""
+
+# 예제 JSON — 실제 DB 스키마 기반으로 생성
+IMPORT_TEMPLATE = {
+    "vehicle": {
+        "car_type": "중형차",
+        "car_brand": "현대",
+        "car_model": "아반떼",
+        "car_plate": "123가4567",
+        "car_birth": "2020-02-22",
+        "car_fuel": "휘발유"
+    },
+    "fuel": [
+        {
+            "date": "2024-01-15",
+            "type": "가득주유",
+            "amount": 80000,
+            "unit_price": 1750,
+            "liters": 45.7,
+            "odometer": 12500,
+            "memo": ""
+        },
+        {
+            "date": "2024-01-28",
+            "type": "부분주유",
+            "amount": 30000,
+            "unit_price": 1760,
+            "liters": None,
+            "odometer": 12800,
+            "memo": "고속도로 휴게소"
+        }
+    ],
+    "maintenance": [
+        {
+            "date": "2024-01-10",
+            "item": "엔진오일 및 오일필터",
+            "amount": 85000,
+            "odometer": 12000,
+            "memo": ""
+        }
+    ],
+    "other": [
+        {
+            "date": "2024-01-05",
+            "item": "자동차 보험",
+            "amount": 250000,
+            "odometer": None,
+            "memo": "1년 갱신"
+        }
+    ]
+}
+
+
 # ── Pydantic 요청 바디 모델 ───────────────────────────────────────────
 # Pydantic 모델은 POST/PUT 요청의 JSON 바디를 자동으로 파싱하고 타입을 검증한다.
 # 기존의 Form(...) 방식을 대체한다.
@@ -109,7 +279,64 @@ class OtherBody(BaseModel):
 
 
 class SettingsBody(BaseModel):
-    car_birth: str
+    car_birth: str = ""
+    car_type: Optional[CarType] = None
+    car_brand: str = ""
+    car_model: str = ""
+    car_plate: str = ""
+    car_fuel: Optional[CarFuel] = None
+
+    @field_validator("car_birth")
+    @classmethod
+    def validate_car_birth(cls, v: str) -> str:
+        if v:
+            try:
+                date.fromisoformat(v)
+            except ValueError:
+                raise ValueError("날짜 형식은 YYYY-MM-DD여야 합니다.")
+        return v
+
+
+class ImportRecordFuel(BaseModel):
+    date: str
+    type: str = "가득주유"
+    amount: int
+    unit_price: Optional[int] = None
+    liters: Optional[float] = None
+    odometer: int
+    memo: str = ""
+
+
+class ImportRecordMaintenance(BaseModel):
+    date: str
+    item: str
+    amount: int = 0
+    odometer: int
+    memo: str = ""
+
+
+class ImportRecordOther(BaseModel):
+    date: str
+    item: str
+    amount: int = 0
+    odometer: Optional[int] = None
+    memo: str = ""
+
+
+class ImportVehicle(BaseModel):
+    car_type: str = ""
+    car_brand: str = ""
+    car_model: str = ""
+    car_plate: str = ""
+    car_birth: str = ""
+    car_fuel: str = ""
+
+
+class ImportBody(BaseModel):
+    vehicle: Optional[ImportVehicle] = None
+    fuel: List[ImportRecordFuel] = []
+    maintenance: List[ImportRecordMaintenance] = []
+    other: List[ImportRecordOther] = []
 
 
 # ── 대시보드 ──────────────────────────────────────────────────────────
@@ -145,24 +372,222 @@ def get_dashboard():
 
 
 # ── 설정 ──────────────────────────────────────────────────────────────
+
+# 차량 정보 선택지 목록 반환 — 프론트엔드 드롭다운에서 사용
+@app.get("/api/settings/options")
+def settings_options():
+    return {
+        "car_type": CAR_TYPE_OPTIONS,
+        "car_fuel": CAR_FUEL_OPTIONS,
+    }
+
+
 @app.get("/api/settings")
 def get_settings():
     conn = get_db()
-    row = conn.execute("SELECT value FROM settings WHERE key='car_birth'").fetchone()
+    rows = conn.execute("SELECT key, value FROM settings").fetchall()
     conn.close()
-    return {"car_birth": row["value"] if row else ""}
+    data = {r["key"]: r["value"] for r in rows}
+    return {
+        "car_birth":  data.get("car_birth", ""),
+        "car_type":   data.get("car_type", ""),
+        "car_brand":  data.get("car_brand", ""),
+        "car_model":  data.get("car_model", ""),
+        "car_plate":  data.get("car_plate", ""),
+        "car_fuel":   data.get("car_fuel", ""),
+    }
 
 
 @app.put("/api/settings")
 def update_settings(body: SettingsBody):
     conn = get_db()
-    conn.execute(
-        "INSERT OR REPLACE INTO settings (key, value) VALUES ('car_birth', ?)",
-        (body.car_birth,),
-    )
+    fields = {
+        "car_birth":  body.car_birth,
+        "car_type":   body.car_type.value if body.car_type else "",
+        "car_brand":  body.car_brand,
+        "car_model":  body.car_model,
+        "car_plate":  body.car_plate,
+        "car_fuel":   body.car_fuel.value if body.car_fuel else "",
+    }
+    for key, value in fields.items():
+        conn.execute(
+            "INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)",
+            (key, value),
+        )
     conn.commit()
     conn.close()
-    return {"car_birth": body.car_birth}
+    return fields
+
+
+# ── 데이터 가져오기 / 내보내기 ─────────────────────────────────────────
+
+@app.get("/api/import/template")
+def import_template():
+    """예제 JSON 파일 다운로드 — LLM에게 차필 형식을 알려주기 위한 샘플"""
+    content = json.dumps(IMPORT_TEMPLATE, ensure_ascii=False, indent=2)
+    return Response(
+        content=content,
+        media_type="application/json",
+        headers={"Content-Disposition": "attachment; filename=chapil_template.json"},
+    )
+
+
+@app.get("/api/import/prompt")
+def import_prompt():
+    """LLM에게 전달할 변환 프롬프트 반환"""
+    return {"prompt": IMPORT_PROMPT}
+
+
+@app.post("/api/import/preview")
+def import_preview(body: ImportBody):
+    """
+    업로드된 JSON을 파싱·검증 후 미리보기 데이터 반환.
+    DB에는 저장하지 않는다. 이상이 없으면 /api/import/confirm 을 호출할 것.
+    """
+    errors: List[str] = []
+
+    # 날짜 형식 검증 헬퍼
+    def check_date(val: str, label: str) -> bool:
+        try:
+            date.fromisoformat(val)
+            return True
+        except ValueError:
+            errors.append(f"{label}: 날짜 형식 오류 ({val!r})")
+            return False
+
+    for i, r in enumerate(body.fuel):
+        check_date(r.date, f"주유 {i+1}번")
+
+    for i, r in enumerate(body.maintenance):
+        check_date(r.date, f"정비 {i+1}번")
+
+    for i, r in enumerate(body.other):
+        check_date(r.date, f"기타 {i+1}번")
+
+    return {
+        "counts": {
+            "fuel":        len(body.fuel),
+            "maintenance": len(body.maintenance),
+            "other":       len(body.other),
+        },
+        "records": {
+            "fuel":        [r.model_dump() for r in body.fuel],
+            "maintenance": [r.model_dump() for r in body.maintenance],
+            "other":       [r.model_dump() for r in body.other],
+        },
+        "vehicle": body.vehicle.model_dump() if body.vehicle else None,
+        "errors": errors,
+    }
+
+
+@app.post("/api/import/confirm", status_code=201)
+def import_confirm(body: ImportBody):
+    """
+    미리보기에서 확인한 데이터를 실제 DB에 저장한다.
+    fuel 레코드는 날짜 오름차순으로 삽입하여 연비를 올바르게 계산한다.
+    """
+    conn = get_db()
+
+    # 차량 정보가 있으면 settings 에 반영 (빈 값은 덮어쓰지 않음)
+    if body.vehicle:
+        v = body.vehicle
+        vehicle_fields = {
+            "car_birth":  v.car_birth,
+            "car_type":   v.car_type,
+            "car_brand":  v.car_brand,
+            "car_model":  v.car_model,
+            "car_plate":  v.car_plate,
+            "car_fuel":   v.car_fuel,
+        }
+        for key, value in vehicle_fields.items():
+            if value:
+                conn.execute(
+                    "INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)",
+                    (key, value),
+                )
+
+    # 주유 — 날짜순 삽입으로 연비 자동 계산
+    for record in sorted(body.fuel, key=lambda r: r.date):
+        last = conn.execute(
+            "SELECT odometer, liters FROM fuel ORDER BY date DESC, id DESC LIMIT 1"
+        ).fetchone()
+        interval_km = None
+        fuel_economy = None
+        if last:
+            interval_km = record.odometer - last["odometer"]
+            if record.liters and record.liters > 0 and interval_km > 0:
+                fuel_economy = round(interval_km / record.liters, 2)
+        conn.execute(
+            "INSERT INTO fuel (date, type, amount, unit_price, liters, odometer, interval_km, fuel_economy, memo)"
+            " VALUES (?,?,?,?,?,?,?,?,?)",
+            (record.date, record.type, record.amount, record.unit_price,
+             record.liters, record.odometer, interval_km, fuel_economy, record.memo),
+        )
+
+    # 정비
+    for record in body.maintenance:
+        conn.execute(
+            "INSERT INTO maintenance (date, category, item, amount, odometer, memo) VALUES (?,?,?,?,?,?)",
+            (record.date, "정비", record.item, record.amount, record.odometer, record.memo),
+        )
+
+    # 기타
+    for record in body.other:
+        conn.execute(
+            "INSERT INTO other (date, category, item, amount, odometer, memo) VALUES (?,?,?,?,?,?)",
+            (record.date, "기타", record.item, record.amount, record.odometer, record.memo),
+        )
+
+    conn.commit()
+    conn.close()
+
+    return {
+        "imported": {
+            "fuel":        len(body.fuel),
+            "maintenance": len(body.maintenance),
+            "other":       len(body.other),
+        }
+    }
+
+
+@app.get("/api/export")
+def export_data():
+    """현재 DB 전체를 차필 가져오기 형식과 동일한 JSON으로 내보낸다."""
+    conn = get_db()
+
+    settings_rows = conn.execute("SELECT key, value FROM settings").fetchall()
+    settings = {r["key"]: r["value"] for r in settings_rows}
+
+    fuel_rows = conn.execute(
+        "SELECT date, type, amount, unit_price, liters, odometer, memo FROM fuel ORDER BY date ASC, id ASC"
+    ).fetchall()
+    maintenance_rows = conn.execute(
+        "SELECT date, item, amount, odometer, memo FROM maintenance ORDER BY date ASC, id ASC"
+    ).fetchall()
+    other_rows = conn.execute(
+        "SELECT date, item, amount, odometer, memo FROM other ORDER BY date ASC, id ASC"
+    ).fetchall()
+    conn.close()
+
+    data = {
+        "vehicle": {
+            "car_birth":  settings.get("car_birth", ""),
+            "car_type":   settings.get("car_type", ""),
+            "car_brand":  settings.get("car_brand", ""),
+            "car_model":  settings.get("car_model", ""),
+            "car_plate":  settings.get("car_plate", ""),
+            "car_fuel":   settings.get("car_fuel", ""),
+        },
+        "fuel":        [dict(r) for r in fuel_rows],
+        "maintenance": [dict(r) for r in maintenance_rows],
+        "other":       [dict(r) for r in other_rows],
+    }
+    content = json.dumps(data, ensure_ascii=False, indent=2)
+    return Response(
+        content=content,
+        media_type="application/json",
+        headers={"Content-Disposition": "attachment; filename=chapil_export.json"},
+    )
 
 
 # ── 주유 ──────────────────────────────────────────────────────────────

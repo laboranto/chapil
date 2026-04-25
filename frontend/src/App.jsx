@@ -8,6 +8,7 @@ import MaintenanceForm from './pages/MaintenanceForm'
 import OtherList from './pages/OtherList'
 import OtherForm from './pages/OtherForm'
 import Settings from './pages/Settings'
+import ImportGuide from './pages/ImportGuide'
 
 // App: 라우터 설정. 어떤 URL에서 어떤 페이지 컴포넌트를 보여줄지 정의한다.
 // BrowserRouter: 브라우저의 URL을 기반으로 라우팅한다.
@@ -27,6 +28,7 @@ function App() {
         <Route path="/other/new"              element={<OtherForm />} />
         <Route path="/other/:id/edit"         element={<OtherForm />} />
         <Route path="/settings"               element={<Settings />} />
+        <Route path="/import"                 element={<ImportGuide />} />
       </Routes>
       {/* BottomNav와 bottom-bg는 모든 페이지에서 항상 표시된다 */}
       <BottomNav />

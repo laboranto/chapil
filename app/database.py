@@ -46,7 +46,12 @@ def init_db():
             key TEXT PRIMARY KEY,
             value TEXT
         );
-        INSERT OR IGNORE INTO settings (key, value) VALUES ('car_birth', '2020-02-22');
+        INSERT OR IGNORE INTO settings (key, value) VALUES ('car_birth', '');
+        INSERT OR IGNORE INTO settings (key, value) VALUES ('car_type', '');
+        INSERT OR IGNORE INTO settings (key, value) VALUES ('car_brand', '');
+        INSERT OR IGNORE INTO settings (key, value) VALUES ('car_model', '');
+        INSERT OR IGNORE INTO settings (key, value) VALUES ('car_plate', '');
+        INSERT OR IGNORE INTO settings (key, value) VALUES ('car_fuel', '');
 
         CREATE TABLE IF NOT EXISTS other (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
