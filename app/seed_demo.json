@@ -1,10 +1,10 @@
 {
   "vehicle": {
-    "car_type": "승용",
+    "car_type": "준중형",
     "car_brand": "현대",
     "car_model": "아반떼 CN7",
     "car_plate": "123가4567",
-    "car_birth": "2021-03",
+    "car_birth": "2021-03-01",
     "car_fuel": "휘발유"
   },
   "fuel": [
