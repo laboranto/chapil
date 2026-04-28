@@ -3,7 +3,6 @@ import react from '@vitejs/plugin-react'
 import svgr from 'vite-plugin-svgr'
 
 export default defineConfig({
-  base: '/chapil-demo/',
   plugins: [react(), svgr()],
   server: {
     // 개발 중 /api/* 요청을 FastAPI 서버(8000포트)로 대신 전달(proxy)한다.
