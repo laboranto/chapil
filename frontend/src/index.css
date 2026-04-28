@@ -1,6 +1,6 @@
 @font-face {
   font-family: 'Hangil';
-  src: url('src/assets/fonts/hangil.ttf') format('truetype');
+  src: url('./assets/fonts/hangil.ttf') format('truetype');
 }
 
 *, *::before, *::after {
