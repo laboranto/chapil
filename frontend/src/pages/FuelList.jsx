@@ -1,13 +1,16 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../api'
+import MoreMenu from '../components/MoreMenu'
+import { useSettings } from '../context/SettingsContext'
 
 const fmt = (n) => Number(n).toLocaleString('ko-KR')
 
 export default function FuelList() {
   const [records, setRecords] = useState([])
-  // useNavigate: 코드에서 페이지를 이동시키는 함수를 반환한다.
   const navigate = useNavigate()
+  const { options, settings } = useSettings()
+  const economyUnit = options.car_fuel.find(o => o.code === settings.car_fuel)?.economy_unit ?? 'km/L'
 
   useEffect(() => {
     api.getFuel().then(setRecords)
@@ -35,17 +38,19 @@ export default function FuelList() {
                   <div className="card-title">{r.date}</div>
                   <div className="card-sub">{fmt(r.odometer)}km{r.interval_km ? ` · +${r.interval_km}km` : ''}</div>
                 </div>
-                <div className="card-amount">{fmt(r.amount)}원</div>
+                <div className="card-amount">
+                  {fmt(r.amount)}원
+                  <MoreMenu
+                    onEdit={() => navigate(`/fuel/${r.id}/edit`)}
+                    onDelete={() => handleDelete(r.id)}
+                  />
+                </div>
               </div>
               <div className="card-meta">
-                {r.liters      && <span>{r.liters}L</span>}
+                {r.liters      && <span>{parseFloat(r.liters).toLocaleString('ko-KR', { maximumFractionDigits: 3 })}L</span>}
                 {r.unit_price  && <span>@{fmt(r.unit_price)}원/L</span>}
-                {r.fuel_economy && <span className="badge green">{r.fuel_economy}km/L</span>}
+                {r.fuel_economy && <span className="badge green">{r.fuel_economy}&nbsp;{economyUnit}</span>}
                 {r.memo        && <span>{r.memo}</span>}
-              </div>
-              <div className="card-actions">
-                <button className="btn-sm btn-edit" onClick={() => navigate(`/fuel/${r.id}/edit`)}>수정</button>
-                <button className="btn-sm btn-del"  onClick={() => handleDelete(r.id)}>삭제</button>
               </div>
             </div>
           ))

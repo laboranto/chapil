@@ -5,11 +5,12 @@ from fastapi.responses import FileResponse, Response
 from contextlib import asynccontextmanager
 from pydantic import BaseModel, field_validator
 from typing import Optional, List
-from datetime import date
+from datetime import date, timedelta, datetime
 from pathlib import Path
 from enum import Enum
 import os
 import json
+import time
 from database import get_db, init_db
 
 BASE_DIR = Path(__file__).parent
@@ -17,8 +18,63 @@ BASE_DIR = Path(__file__).parent
 # STATIC_DIR: 로컬에서는 ../static, Docker에서는 ENV STATIC_DIR=/app/static 으로 주입된다.
 STATIC_DIR = Path(os.environ.get("STATIC_DIR", str(BASE_DIR.parent / "static")))
 
+# BACKUP_DIR: 자동 백업 저장 경로. Docker에서는 ENV BACKUP_DIR=/data/backups 으로 주입한다.
+BACKUP_DIR = Path(os.environ.get("BACKUP_DIR", str(BASE_DIR.parent / "backups")))
+BACKUP_MAX_COUNT = int(os.environ.get("BACKUP_MAX_COUNT", "30"))
+
 # DIST_DIR: React 빌드 결과물 경로. Docker 빌드 시에만 존재한다.
 DIST_DIR = BASE_DIR / "frontend" / "dist"
+
+
+# ── 백업 ──────────────────────────────────────────────────────────────
+
+def build_export_data() -> dict:
+    conn = get_db()
+    settings_rows = conn.execute("SELECT key, value FROM settings").fetchall()
+    settings = {r["key"]: r["value"] for r in settings_rows}
+    fuel_rows = conn.execute(
+        "SELECT date, type, amount, unit_price, liters, odometer, memo FROM fuel ORDER BY date ASC, id ASC"
+    ).fetchall()
+    maintenance_rows = conn.execute(
+        "SELECT date, item, amount, odometer, memo FROM maintenance ORDER BY date ASC, id ASC"
+    ).fetchall()
+    other_rows = conn.execute(
+        "SELECT date, item, amount, odometer, memo FROM other ORDER BY date ASC, id ASC"
+    ).fetchall()
+    conn.close()
+    return {
+        "vehicle": {
+            "car_birth": settings.get("car_birth", ""),
+            "car_type":  settings.get("car_type", ""),
+            "car_brand": settings.get("car_brand", ""),
+            "car_model": settings.get("car_model", ""),
+            "car_plate": settings.get("car_plate", ""),
+            "car_fuel":  settings.get("car_fuel", ""),
+        },
+        "fuel":        [dict(r) for r in fuel_rows],
+        "maintenance": [dict(r) for r in maintenance_rows],
+        "other":       [dict(r) for r in other_rows],
+    }
+
+
+def backup_if_needed():
+    BACKUP_DIR.mkdir(parents=True, exist_ok=True)
+    existing = sorted(BACKUP_DIR.glob("chapil_backup_*.json"), key=lambda p: p.stat().st_mtime)
+
+    # 24시간 이내 백업이 존재하면 건너뜀
+    if existing and (time.time() - existing[-1].stat().st_mtime) < 86400:
+        return
+
+    filename = f"chapil_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+    (BACKUP_DIR / filename).write_text(
+        json.dumps(build_export_data(), ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+
+    # 초과분 삭제 (오래된 것부터)
+    existing = sorted(BACKUP_DIR.glob("chapil_backup_*.json"), key=lambda p: p.stat().st_mtime)
+    for old in existing[:-BACKUP_MAX_COUNT]:
+        old.unlink()
 
 
 # ── lifespan: 앱 시작/종료 시점에 실행될 코드를 정의 ─────────────────
@@ -28,13 +84,16 @@ DIST_DIR = BASE_DIR / "frontend" / "dist"
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_db()
+    seed_demo()
+    backup_if_needed()
     yield
 
 
 app = FastAPI(title="차계부", lifespan=lifespan)
 
-# 정적 파일 서빙 유지 (아이콘, CSS 등)
-app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+# 정적 파일 서빙 — Docker 빌드 시에만 static/ 폴더가 존재한다.
+if STATIC_DIR.exists():
+    app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
 # CORS 미들웨어: React SPA가 다른 포트(예: localhost:3000)에서 이 API를 호출할 수 있도록 허용.
 # 배포 시에는 allow_origins를 실제 도메인으로 제한할 것.
@@ -139,6 +198,9 @@ CAR_FUEL_OPTIONS = [
     {"code": "bifuel",   "label": "바이퓨얼 (휘발유+LPG)", "ui_term": "주유", "qty_unit": "L", "price_unit": "원/L", "economy_unit": "km/L",   "economy_label": "연비"},  # TODO
     {"code": "phev",     "label": "플러그인 하이브리드", "ui_term": "주유", "qty_unit": "L",  "price_unit": "원/L",   "economy_unit": "km/L",   "economy_label": "연비"},  # TODO
 ]
+
+_CAR_TYPE_BY_LABEL = {opt["label"]: opt["code"] for opt in CAR_TYPE_OPTIONS}
+_CAR_FUEL_BY_LABEL = {opt["label"]: opt["code"] for opt in CAR_FUEL_OPTIONS}
 
 
 # ── 데이터 가져오기/내보내기 상수 ─────────────────────────────────────────
@@ -331,6 +393,16 @@ class ImportVehicle(BaseModel):
     car_birth: str = ""
     car_fuel: str = ""
 
+    @field_validator("car_type")
+    @classmethod
+    def normalize_car_type(cls, v: str) -> str:
+        return _CAR_TYPE_BY_LABEL.get(v, v)
+
+    @field_validator("car_fuel")
+    @classmethod
+    def normalize_car_fuel(cls, v: str) -> str:
+        return _CAR_FUEL_BY_LABEL.get(v, v)
+
 
 class ImportBody(BaseModel):
     vehicle: Optional[ImportVehicle] = None
@@ -345,29 +417,52 @@ class ImportBody(BaseModel):
 def get_dashboard():
     conn = get_db()
     row = conn.execute("SELECT value FROM settings WHERE key='car_birth'").fetchone()
-    car_birth = date.fromisoformat(row["value"]) if row else date(2020, 2, 26)
-    total_days = (date.today() - car_birth).days
+    car_birth_val = row["value"] if row else ""
+    car_birth = date.fromisoformat(car_birth_val) if car_birth_val else None
+    total_days = (date.today() - car_birth).days if car_birth else None
 
     recent_fuel = conn.execute(
         "SELECT * FROM fuel ORDER BY date DESC, id DESC LIMIT 5"
     ).fetchall()
 
-    total_fuel  = conn.execute("SELECT SUM(amount) as total FROM fuel").fetchone()["total"] or 0
-    total_maint = conn.execute("SELECT SUM(amount) as total FROM maintenance").fetchone()["total"] or 0
-    total_other = conn.execute("SELECT SUM(amount) as total FROM other").fetchone()["total"] or 0
+    last_maintenance = conn.execute(
+        "SELECT * FROM maintenance ORDER BY date DESC, id DESC LIMIT 1"
+    ).fetchone()
+
+    last_other = conn.execute(
+        "SELECT * FROM other ORDER BY date DESC, id DESC LIMIT 1"
+    ).fetchone()
+
+    cutoff = (date.today() - timedelta(days=30)).isoformat()
+    fuel_30d  = conn.execute("SELECT SUM(amount) as total FROM fuel WHERE date >= ?", (cutoff,)).fetchone()["total"] or 0
+    maint_30d = conn.execute("SELECT SUM(amount) as total FROM maintenance WHERE date >= ?", (cutoff,)).fetchone()["total"] or 0
+    other_30d = conn.execute("SELECT SUM(amount) as total FROM other WHERE date >= ?", (cutoff,)).fetchone()["total"] or 0
 
     avg_economy = conn.execute(
         "SELECT AVG(fuel_economy) as avg FROM fuel WHERE fuel_economy IS NOT NULL AND fuel_economy > 0"
     ).fetchone()["avg"]
 
+    latest_odometer_row = conn.execute("""
+        SELECT odometer FROM (
+            SELECT date, odometer FROM fuel WHERE odometer IS NOT NULL
+            UNION ALL
+            SELECT date, odometer FROM maintenance WHERE odometer IS NOT NULL
+            UNION ALL
+            SELECT date, odometer FROM other WHERE odometer IS NOT NULL
+        ) ORDER BY date DESC, odometer DESC LIMIT 1
+    """).fetchone()
+
     conn.close()
     return {
-        "car_birth": str(car_birth),
+        "car_birth": str(car_birth) if car_birth else "",
         "total_days": total_days,
         # sqlite3.Row는 JSON 직렬화가 안 되므로 dict()로 변환
         "recent_fuel": [dict(r) for r in recent_fuel],
-        "total_cost": total_fuel + total_maint + total_other,
+        "last_maintenance": dict(last_maintenance) if last_maintenance else None,
+        "last_other": dict(last_other) if last_other else None,
+        "cost_last_30d": fuel_30d + maint_30d + other_30d,
         "avg_economy": round(avg_economy, 2) if avg_economy else None,
+        "latest_odometer": latest_odometer_row["odometer"] if latest_odometer_row else None,
     }
 
 
@@ -388,13 +483,15 @@ def get_settings():
     rows = conn.execute("SELECT key, value FROM settings").fetchall()
     conn.close()
     data = {r["key"]: r["value"] for r in rows}
+    car_type_raw = data.get("car_type", "")
+    car_fuel_raw = data.get("car_fuel", "")
     return {
         "car_birth":  data.get("car_birth", ""),
-        "car_type":   data.get("car_type", ""),
+        "car_type":   _CAR_TYPE_BY_LABEL.get(car_type_raw, car_type_raw),
         "car_brand":  data.get("car_brand", ""),
         "car_model":  data.get("car_model", ""),
         "car_plate":  data.get("car_plate", ""),
-        "car_fuel":   data.get("car_fuel", ""),
+        "car_fuel":   _CAR_FUEL_BY_LABEL.get(car_fuel_raw, car_fuel_raw),
     }
 
 
@@ -550,39 +647,27 @@ def import_confirm(body: ImportBody):
     }
 
 
+def seed_demo():
+    if os.environ.get("DEMO_MODE", "").lower() != "true":
+        return
+    seed_path = BASE_DIR / "seed_demo.json"
+    if not seed_path.exists():
+        return
+    conn = get_db()
+    has_data = conn.execute("SELECT COUNT(*) FROM fuel").fetchone()[0] > 0
+    conn.close()
+    if has_data:
+        return
+    with open(seed_path, encoding="utf-8") as f:
+        raw = json.load(f)
+    import_confirm(ImportBody(**raw))
+
+
+# 내보내기
 @app.get("/api/export")
 def export_data():
     """현재 DB 전체를 차필 가져오기 형식과 동일한 JSON으로 내보낸다."""
-    conn = get_db()
-
-    settings_rows = conn.execute("SELECT key, value FROM settings").fetchall()
-    settings = {r["key"]: r["value"] for r in settings_rows}
-
-    fuel_rows = conn.execute(
-        "SELECT date, type, amount, unit_price, liters, odometer, memo FROM fuel ORDER BY date ASC, id ASC"
-    ).fetchall()
-    maintenance_rows = conn.execute(
-        "SELECT date, item, amount, odometer, memo FROM maintenance ORDER BY date ASC, id ASC"
-    ).fetchall()
-    other_rows = conn.execute(
-        "SELECT date, item, amount, odometer, memo FROM other ORDER BY date ASC, id ASC"
-    ).fetchall()
-    conn.close()
-
-    data = {
-        "vehicle": {
-            "car_birth":  settings.get("car_birth", ""),
-            "car_type":   settings.get("car_type", ""),
-            "car_brand":  settings.get("car_brand", ""),
-            "car_model":  settings.get("car_model", ""),
-            "car_plate":  settings.get("car_plate", ""),
-            "car_fuel":   settings.get("car_fuel", ""),
-        },
-        "fuel":        [dict(r) for r in fuel_rows],
-        "maintenance": [dict(r) for r in maintenance_rows],
-        "other":       [dict(r) for r in other_rows],
-    }
-    content = json.dumps(data, ensure_ascii=False, indent=2)
+    content = json.dumps(build_export_data(), ensure_ascii=False, indent=2)
     return Response(
         content=content,
         media_type="application/json",

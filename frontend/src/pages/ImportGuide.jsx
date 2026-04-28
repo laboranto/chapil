@@ -1,6 +1,11 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../api'
+import { useSettings } from '../context/SettingsContext'
+// 버튼 아이콘(심볼) svg 이식
+import DownloadIcon        from '../assets/symbols/download.svg?react'
+import UploadIcon        from '../assets/symbols/upload.svg?react'
+import CopyIcon from '../assets/symbols/copy.svg?react'
 
 export default function ImportGuide() {
   const navigate = useNavigate()
@@ -10,14 +15,19 @@ export default function ImportGuide() {
   const [importing, setImporting] = useState(false)
   const [done, setDone] = useState(null)
   const [parseError, setParseError] = useState('')
+  const [promptText, setPromptText] = useState('')
+
+  // ── 프롬프트 보여주기 ──────────────────────────────────────────
+useEffect(() => {
+  api.getImportPrompt().then(({ prompt }) => setPromptText(prompt))
+}, [])
 
   // ── 프롬프트 클립보드 복사 ──────────────────────────────────────────
-  const copyPrompt = async () => {
-    const { prompt } = await api.getImportPrompt()
-    await navigator.clipboard.writeText(prompt)
-    setPromptCopied(true)
-    setTimeout(() => setPromptCopied(false), 2000)
-  }
+const copyPrompt = async () => {
+  await navigator.clipboard.writeText(promptText)
+  setPromptCopied(true)
+  setTimeout(() => setPromptCopied(false), 3500)
+}
 
   // ── JSON 파일 선택 → 미리보기 ───────────────────────────────────────
   const handleFile = (e) => {
@@ -45,10 +55,34 @@ export default function ImportGuide() {
     }
     reader.readAsText(file, 'utf-8')
   }
+  const VEHICLE_LABELS = {
+    car_type: '차종',
+    car_brand: '브랜드',
+    car_model: '차량명',
+    car_plate: '번호판',
+    car_birth: '출고일',
+    car_fuel: '연료',
+  }
+
+  const TYPE_LABELS = {
+    microcar: '경차', small: '소형차', compact: '준중형차', midsize: '중형차',
+    large: '준대형차', fullsize: '대형차', suv: 'SUV', rv: 'RV', van: '밴',
+    truck: '트럭', other: '기타',
+  }
+
+  const FUEL_LABELS = {
+    gasoline: '휘발유', diesel: '경유', hev: '하이브리드', lpg: 'LPG',
+    ev: '전기', fcev: '수소전지', bifuel: '바이퓨얼 (휘발유+LPG)', phev: '플러그인 하이브리드',
+  }
 
   // ── 가져오기 확정 ───────────────────────────────────────────────────
   const handleConfirm = async () => {
     if (!previewData) return
+    const ok = window.confirm(
+      `기존 데이터에 ${previewData.counts.fuel}건의 주유, ${previewData.counts.maintenance}건의 정비, ${previewData.counts.other}건의 기타 기록이 추가됩니다.\n` +
+      '이 작업은 되돌릴 수 없습니다. 계속할까요?'
+    )
+    if (!ok) return
     setImporting(true)
     try {
       const result = await api.importConfirm({
@@ -59,12 +93,16 @@ export default function ImportGuide() {
       })
       setDone(result.imported)
       setPreviewData(null)
+      await refreshSettings()
     } catch (err) {
       setParseError(`가져오기 실패: ${err.message}`)
     } finally {
       setImporting(false)
     }
   }
+
+  // 충전인지 주유인지 구분하여 표기
+  const { fuelTerm, refreshSettings } = useSettings()
 
   return (
     <>
@@ -77,64 +115,66 @@ export default function ImportGuide() {
 
         {/* ── 1단계: 예제 파일 + 프롬프트 ── */}
         <div className="import-step">
-          <div className="import-step-num">1</div>
-          <div className="import-step-body">
-            <p className="import-step-title">예제 파일과 프롬프트 준비</p>
-            <p className="import-step-desc">
+          <div>
+            <h3>1. 예제 파일과 프롬프트 준비</h3>
+            <p>
               아래 버튼으로 예제 파일을 내려받고, 프롬프트를 복사하세요.
             </p>
-            <div className="import-btns">
-              <a className="btn-action" href={api.templateUrl()} download="chapil_template.json">
-                예제 파일 다운로드
+            <div className="btn-wrap">
+              <a className="btn" href={api.templateUrl()} download="chapil_template.json">
+                <DownloadIcon/>예제 파일 다운로드
               </a>
-              <button className="btn-action" onClick={copyPrompt}>
-                {promptCopied ? '복사됨 ✓' : '프롬프트 복사'}
-              </button>
-            </div>
+              <span className={promptCopied ? 'notice' : 'notice transparent'}>복사 완료!</span>
+              </div>
+              <details>
+                <summary>프롬프트 보기</summary>
+                <div className="prompt">
+                <div className="prompt-header">
+                  <button onClick={copyPrompt}><CopyIcon/></button>
+                </div>
+                <pre>{promptText}</pre>
+                </div>
+              </details>
           </div>
-        </div>
+          </div>
 
         {/* ── 2단계: LLM에 전달 ── */}
         <div className="import-step">
-          <div className="import-step-num">2</div>
-          <div className="import-step-body">
-            <p className="import-step-title">LLM으로 변환</p>
-            <p className="import-step-desc">
-              다음 내용을 대화형 인공지능(LLM)에 전달하세요.
+          <div>
+            <h3>2. LLM으로 변환</h3>
+            <p>
+              하나, 다음 내용을 대화형 <b>인공지능(LLM)에 전달</b>하세요.
             </p>
-            <ul className="import-checklist">
-              <li>복사한 프롬프트</li>
-              <li>예제 파일 <code>chapil_template.json</code></li>
-              <li>기존 차계부 앱에서 내보낸 파일 (CSV, XLSX 등)</li>
+            <ul className="prompt">
+              <li>복사한 <b>프롬프트</b></li>
+              <li>예제 파일: <b>chapil_template.json</b></li>
+              <li>기존 차계부 앱에서 내보낸 <b>데이터 파일</b> (CSV, XLSX 등)</li>
             </ul>
-            <p className="import-step-desc">
-              LLM이 생성한 변환 파일(JSON)을 저장하세요!
+            <p>
+              둘, LLM이 만들어준 <b>파일(JSON)을 저장</b>하세요!
             </p>
           </div>
         </div>
 
         {/* ── 3단계: 파일 업로드 ── */}
         <div className="import-step">
-          <div className="import-step-num">3</div>
-          <div className="import-step-body">
-            <p className="import-step-title">변환된 파일 업로드</p>
-            <label className="btn-action btn-file-label">
-              JSON 파일 선택
+          <div>
+            <h3>3. 변환된 파일 업로드
+              <label className="btn">
+              JSON 파일 가져오기
               <input
                 type="file"
                 accept=".json,application/json"
                 onChange={handleFile}
                 style={{ display: 'none' }}
               />
-            </label>
+              </label>
+            </h3>
             {parseError && <p className="import-error">{parseError}</p>}
-          </div>
-        </div>
 
         {/* ── 미리보기 ── */}
         {previewData && (
           <div className="import-preview">
-            <p className="import-step-title">미리보기</p>
 
             {previewData.errors.length > 0 && (
               <div className="import-error-list">
@@ -144,48 +184,51 @@ export default function ImportGuide() {
 
             {previewData.vehicle && (
               <div className="preview-section">
-                <p className="preview-section-label">차량 정보</p>
+                <p className="preview-section-label">데이터 미리보기</p>
                 <div className="preview-kv">
                   {Object.entries(previewData.vehicle)
                     .filter(([, v]) => v)
                     .map(([k, v]) => (
                       <div key={k} className="preview-kv-row">
-                        <span className="preview-kv-key">{k}</span>
-                        <span className="preview-kv-val">{v}</span>
+                        <span className="preview-kv-key">{VEHICLE_LABELS[k] ?? k}</span>
+                        <span className="preview-kv-val">
+                          {k === 'car_type' ? (TYPE_LABELS[v] ?? v)
+                           : k === 'car_fuel' ? (FUEL_LABELS[v] ?? v)
+                           : v}
+                        </span>
                       </div>
                     ))}
                 </div>
+                <div className="preview-counts">
+                  <span>주유 <b>{previewData.counts.fuel}</b>건 | </span>
+                  <span>정비 <b>{previewData.counts.maintenance}</b>건 | </span>
+                  <span>기타 <b>{previewData.counts.other}</b>건</span>
+                </div>
+
+                  <button
+                    className="btn btn-import-confirm"
+                    onClick={handleConfirm}
+                    disabled={importing || previewData.errors.length > 0}
+                  >
+                    가져오기 확정
+                  </button>
               </div>
             )}
-
-            <div className="preview-counts">
-              <span>주유 {previewData.counts.fuel}건</span>
-              <span>정비 {previewData.counts.maintenance}건</span>
-              <span>기타 {previewData.counts.other}건</span>
-            </div>
-
-            <button
-              className="btn-submit btn-import-confirm"
-              onClick={handleConfirm}
-              disabled={importing || previewData.errors.length > 0}
-            >
-              {importing ? '가져오는 중…' : '가져오기 확정'}
-            </button>
           </div>
         )}
 
         {/* ── 완료 ── */}
         {done && (
           <div className="import-done">
-            <p>가져오기 완료!</p>
-            <p>주유(충전) {done.fuel}건 · 정비 {done.maintenance}건 · 기타 {done.other}건</p>
-            <button className="btn-action" onClick={() => navigate('/')}>
-              홈으로
-            </button>
+            <p><b>가져오기 완료!</b></p>
+            <p>{fuelTerm} {done.fuel}건 · 정비 {done.maintenance}건 · 기타 {done.other}건</p>
           </div>
         )}
+        <p className="import-loading">{importing ? '가져오는 중…' : ' '}</p>
+        </div>
+        </div>
 
-      </div>
+</div>
     </>
   )
 }

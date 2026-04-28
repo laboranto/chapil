@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../api'
+import MoreMenu from '../components/MoreMenu'
 
 const fmt = (n) => Number(n).toLocaleString('ko-KR')
 
@@ -33,13 +34,15 @@ export default function MaintenanceList() {
                   <div className="card-title">{r.item}</div>
                   <div className="card-sub">{r.date} · {fmt(r.odometer)}km</div>
                 </div>
-                <div className="card-amount">{r.amount ? `${fmt(r.amount)}원` : '-'}</div>
+                <div className="card-amount">
+                  {r.amount ? `${fmt(r.amount)}원` : '-'}
+                  <MoreMenu
+                    onEdit={() => navigate(`/maintenance/${r.id}/edit`)}
+                    onDelete={() => handleDelete(r.id)}
+                  />
+                </div>
               </div>
               {r.memo && <div className="card-meta"><span>{r.memo}</span></div>}
-              <div className="card-actions">
-                <button className="btn-sm btn-edit" onClick={() => navigate(`/maintenance/${r.id}/edit`)}>수정</button>
-                <button className="btn-sm btn-del"  onClick={() => handleDelete(r.id)}>삭제</button>
-              </div>
             </div>
           ))
         }

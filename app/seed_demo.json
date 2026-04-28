@@ -1,0 +1,40 @@
+{
+  "vehicle": {
+    "car_type": "승용",
+    "car_brand": "현대",
+    "car_model": "아반떼 CN7",
+    "car_plate": "123가4567",
+    "car_birth": "2021-03",
+    "car_fuel": "휘발유"
+  },
+  "fuel": [
+    {"date": "2024-01-08", "type": "가득주유", "amount": 72000, "unit_price": 1623, "liters": 44.4, "odometer": 12340, "memo": ""},
+    {"date": "2024-02-01", "type": "가득주유", "amount": 68000, "unit_price": 1608, "liters": 42.3, "odometer": 12891, "memo": ""},
+    {"date": "2024-02-28", "type": "가득주유", "amount": 75000, "unit_price": 1641, "liters": 45.7, "odometer": 13468, "memo": "장거리 후 주유"},
+    {"date": "2024-03-22", "type": "가득주유", "amount": 70000, "unit_price": 1619, "liters": 43.2, "odometer": 14002, "memo": ""},
+    {"date": "2024-04-15", "type": "가득주유", "amount": 73000, "unit_price": 1655, "liters": 44.1, "odometer": 14589, "memo": ""},
+    {"date": "2024-05-10", "type": "가득주유", "amount": 69000, "unit_price": 1612, "liters": 42.8, "odometer": 15143, "memo": ""},
+    {"date": "2024-06-03", "type": "가득주유", "amount": 71000, "unit_price": 1638, "liters": 43.3, "odometer": 15701, "memo": ""},
+    {"date": "2024-07-01", "type": "가득주유", "amount": 74000, "unit_price": 1662, "liters": 44.5, "odometer": 16289, "memo": "여름 휴가 전"},
+    {"date": "2024-08-05", "type": "가득주유", "amount": 67000, "unit_price": 1598, "liters": 41.9, "odometer": 16834, "memo": ""},
+    {"date": "2024-09-12", "type": "가득주유", "amount": 72000, "unit_price": 1630, "liters": 44.2, "odometer": 17412, "memo": ""},
+    {"date": "2024-10-08", "type": "가득주유", "amount": 70000, "unit_price": 1621, "liters": 43.2, "odometer": 17978, "memo": ""},
+    {"date": "2024-11-14", "type": "가득주유", "amount": 68000, "unit_price": 1605, "liters": 42.4, "odometer": 18521, "memo": ""},
+    {"date": "2024-12-20", "type": "가득주유", "amount": 73000, "unit_price": 1648, "liters": 44.3, "odometer": 19089, "memo": "연말 귀성"}
+  ],
+  "maintenance": [
+    {"date": "2024-03-10", "item": "엔진오일 교환", "amount": 85000, "odometer": 13800, "memo": "합성유 5W-30"},
+    {"date": "2024-03-10", "item": "에어필터 교환", "amount": 25000, "odometer": 13800, "memo": ""},
+    {"date": "2024-06-20", "item": "타이어 로테이션", "amount": 20000, "odometer": 15900, "memo": ""},
+    {"date": "2024-09-05", "item": "엔진오일 교환", "amount": 85000, "odometer": 17200, "memo": ""},
+    {"date": "2024-09-05", "item": "브레이크 패드 점검", "amount": 0, "odometer": 17200, "memo": "이상 없음"},
+    {"date": "2024-12-01", "item": "워셔액 보충", "amount": 5000, "odometer": 18800, "memo": ""}
+  ],
+  "other": [
+    {"date": "2024-01-15", "item": "하이패스 충전", "amount": 50000, "odometer": null, "memo": ""},
+    {"date": "2024-04-01", "item": "자동차세 납부", "amount": 134800, "odometer": null, "memo": "1기분"},
+    {"date": "2024-07-15", "item": "자동차세 납부", "amount": 134800, "odometer": null, "memo": "2기분"},
+    {"date": "2024-08-20", "item": "하이패스 충전", "amount": 50000, "odometer": null, "memo": ""},
+    {"date": "2024-11-01", "item": "자동차 보험 갱신", "amount": 620000, "odometer": null, "memo": "1년치"}
+  ]
+}

@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { SettingsProvider } from './context/SettingsContext'
 import BottomNav from './components/BottomNav'
 import Home from './pages/Home'
 import FuelList from './pages/FuelList'
@@ -15,25 +16,27 @@ import ImportGuide from './pages/ImportGuide'
 // Routes / Route: URL 패턴과 컴포넌트를 매핑한다.
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/"                       element={<Home />} />
-        <Route path="/fuel"                   element={<FuelList />} />
-        <Route path="/fuel/new"               element={<FuelForm />} />
-        <Route path="/fuel/:id/edit"          element={<FuelForm />} />
-        <Route path="/maintenance"            element={<MaintenanceList />} />
-        <Route path="/maintenance/new"        element={<MaintenanceForm />} />
-        <Route path="/maintenance/:id/edit"   element={<MaintenanceForm />} />
-        <Route path="/other"                  element={<OtherList />} />
-        <Route path="/other/new"              element={<OtherForm />} />
-        <Route path="/other/:id/edit"         element={<OtherForm />} />
-        <Route path="/settings"               element={<Settings />} />
-        <Route path="/import"                 element={<ImportGuide />} />
-      </Routes>
-      {/* BottomNav와 bottom-bg는 모든 페이지에서 항상 표시된다 */}
-      <BottomNav />
-      <div className="bottom-bg"></div>
-    </BrowserRouter>
+    <SettingsProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/"                       element={<Home />} />
+          <Route path="/fuel"                   element={<FuelList />} />
+          <Route path="/fuel/new"               element={<FuelForm />} />
+          <Route path="/fuel/:id/edit"          element={<FuelForm />} />
+          <Route path="/maintenance"            element={<MaintenanceList />} />
+          <Route path="/maintenance/new"        element={<MaintenanceForm />} />
+          <Route path="/maintenance/:id/edit"   element={<MaintenanceForm />} />
+          <Route path="/other"                  element={<OtherList />} />
+          <Route path="/other/new"              element={<OtherForm />} />
+          <Route path="/other/:id/edit"         element={<OtherForm />} />
+          <Route path="/settings"               element={<Settings />} />
+          <Route path="/import"                 element={<ImportGuide />} />
+        </Routes>
+        {/* BottomNav와 bottom-bg는 모든 페이지에서 항상 표시된다 */}
+        <BottomNav />
+        <div className="bottom-bg"></div>
+      </BrowserRouter>
+    </SettingsProvider>
   )
 }
 

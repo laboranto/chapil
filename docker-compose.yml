@@ -9,5 +9,19 @@ services:
       - "8000:8000"
     environment:
       - DB_PATH=/data/carlog.db
+      - BACKUP_DIR=/data/backups
     volumes:
       - ./data:/data
+
+  carlog-demo:
+    build: .
+    container_name: carlog-demo
+    restart: unless-stopped
+    ports:
+      - "8001:8000"
+    environment:
+      - DB_PATH=/data/carlog.db
+      - BACKUP_DIR=/data/backups
+      - DEMO_MODE=true
+    volumes:
+      - ./data-demo:/data
