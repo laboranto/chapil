@@ -35,6 +35,6 @@
     {"date": "2024-04-01", "item": "자동차세 납부", "amount": 134800, "odometer": null, "memo": "1기분"},
     {"date": "2024-07-15", "item": "자동차세 납부", "amount": 134800, "odometer": null, "memo": "2기분"},
     {"date": "2024-08-20", "item": "하이패스 충전", "amount": 50000, "odometer": null, "memo": ""},
-    {"date": "2024-11-01", "item": "자동차 보험 갱신", "amount": 620000, "odometer": null, "memo": "1년치"}
+    {"date": "2024-11-01", "item": "자동차 보험 갱신", "amount": 620000, "odometer": null, "memo": ""}
   ]
 }
