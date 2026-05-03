@@ -1,4 +1,5 @@
 data/
+app/__pycache__
 backups/
 .venv/
 .old/

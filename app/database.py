@@ -27,6 +27,7 @@ def init_db():
             odometer INTEGER NOT NULL,
             interval_km INTEGER,
             fuel_economy REAL,
+            location TEXT,
             memo TEXT,
             created_at TEXT DEFAULT (datetime('now', 'localtime'))
         );
@@ -38,6 +39,7 @@ def init_db():
             item TEXT NOT NULL,
             amount INTEGER NOT NULL DEFAULT 0,
             odometer INTEGER NOT NULL,
+            location TEXT,
             memo TEXT,
             created_at TEXT DEFAULT (datetime('now', 'localtime'))
         );
@@ -60,9 +62,17 @@ def init_db():
             item TEXT NOT NULL,
             amount INTEGER NOT NULL DEFAULT 0,
             odometer INTEGER,
+            location TEXT,
             memo TEXT,
             created_at TEXT DEFAULT (datetime('now', 'localtime'))
         );
     """)
+
+    # 기존 DB에 location 컬럼이 없으면 추가 (운영 중인 DB 대응)
+    for table in ("fuel", "maintenance", "other"):
+        cols = [row[1] for row in conn.execute(f"PRAGMA table_info({table})").fetchall()]
+        if "location" not in cols:
+            conn.execute(f"ALTER TABLE {table} ADD COLUMN location TEXT")
+
     conn.commit()
     conn.close()

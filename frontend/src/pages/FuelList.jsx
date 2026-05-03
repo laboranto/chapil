@@ -31,12 +31,21 @@ export default function FuelList() {
       <div className="content">
         {records.length === 0
           ? <div className="empty">주유 기록이 없어요</div>
-          : records.map(r => (
+          : records.map(r => {
+            const badOdometer = !r.odometer || r.odometer <= 0
+            // interval_km이 odometer의 95% 이상이면 이전 기록의 odometer가 비정상이었던 것
+            const suspiciousInterval = r.interval_km && r.odometer && r.interval_km >= r.odometer * 0.95
+            const hasDataIssue = badOdometer || suspiciousInterval
+            const showEconomy = r.fuel_economy && !hasDataIssue && r.fuel_economy <= 50
+            return (
             <div className="card" key={r.id}>
               <div className="card-row">
                 <div>
                   <div className="card-title">{r.date}</div>
-                  <div className="card-sub">{fmt(r.odometer)}km{r.interval_km ? ` · +${r.interval_km}km` : ''}</div>
+                  <div className="card-sub">
+                    {fmt(r.odometer)}km{r.interval_km ? ` · +${r.interval_km}km` : ''}
+                    {hasDataIssue && <>&nbsp;<span className="badge orange">주행거리 오류</span></>}
+                  </div>
                 </div>
                 <div className="card-amount">
                   {fmt(r.amount)}원
@@ -49,11 +58,11 @@ export default function FuelList() {
               <div className="card-meta">
                 {r.liters      && <span>{parseFloat(r.liters).toLocaleString('ko-KR', { maximumFractionDigits: 3 })}L</span>}
                 {r.unit_price  && <span>@{fmt(r.unit_price)}원/L</span>}
-                {r.fuel_economy && <span className="badge green">{r.fuel_economy}&nbsp;{economyUnit}</span>}
+                {showEconomy   && <span className="badge green">{r.fuel_economy}&nbsp;{economyUnit}</span>}
                 {r.memo        && <span>{r.memo}</span>}
               </div>
             </div>
-          ))
+          )})
         }
       </div>
     </>

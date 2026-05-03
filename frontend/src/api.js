@@ -47,15 +47,36 @@ export const api = {
   updateSettings:     (data) => req('PUT', '/api/settings', data),
   getSettingsOptions: ()     => req('GET', '/api/settings/options'),
 
+  // 차량 이미지
+  uploadCarImage: async (file) => {
+    const form = new FormData()
+    form.append('file', file)
+    const res = await fetch('/api/settings/image', { method: 'POST', body: form })
+    if (!res.ok) throw new Error(await res.text())
+    return res.json()
+  },
+  uploadCarImageOriginal: async (file) => {
+    const form = new FormData()
+    form.append('file', file)
+    const res = await fetch('/api/settings/image/original', { method: 'POST', body: form })
+    if (!res.ok) throw new Error(await res.text())
+    return res.json()
+  },
+  deleteCarImage: () => req('DELETE', '/api/settings/image'),
+  carImageUrl:         (ts) => `/api/settings/image?t=${ts}`,
+  carImageOriginalUrl: (ts) => `/api/settings/image/original?t=${ts}`,
+
   // 데이터 가져오기
-  getImportPrompt:   ()     => req('GET',  '/api/import/prompt'),
+  importXlsx: async (file) => {
+    const form = new FormData()
+    form.append('file', file)
+    const res = await fetch('/api/import/xlsx', { method: 'POST', body: form })
+    if (!res.ok) throw new Error(await res.text())
+    return res.json()
+  },
   importPreview:     (data) => req('POST', '/api/import/preview', data),
   importConfirm:     (data) => req('POST', '/api/import/confirm', data),
 
   // 데이터 내보내기 — 파일 다운로드이므로 fetch 대신 직접 URL 사용
-  // 사용법: window.location.href = api.exportUrl()
   exportUrl: () => '/api/export',
-
-  // 예제 파일 다운로드 URL
-  templateUrl: () => '/api/import/template',
 }
