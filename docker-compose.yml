@@ -1,6 +1,11 @@
 version: "3.8"
 
 services:
+  redis:
+    image: redis:7-alpine
+    container_name: chapil-redis
+    restart: unless-stopped
+
   chapil:
     build: .
     container_name: chapil
@@ -11,6 +16,9 @@ services:
       - DB_PATH=/data/carlog.db
       - BACKUP_DIR=/data/backups
       - DATA_DIR=/data
+      - REDIS_HOST=redis
+    depends_on:
+      - redis
     volumes:
       - ./data:/data
 
@@ -25,5 +33,8 @@ services:
       - BACKUP_DIR=/data/backups
       - DATA_DIR=/data
       - DEMO_MODE=true
+      - REDIS_HOST=redis
+    depends_on:
+      - redis
     volumes:
       - ./data-demo:/data
