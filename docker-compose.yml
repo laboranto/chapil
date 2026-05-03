@@ -1,9 +1,9 @@
 version: "3.8"
 
 services:
-  carlog:
+  chapil:
     build: .
-    container_name: carlog
+    container_name: chapil
     restart: unless-stopped
     ports:
       - "8000:8000"
@@ -14,9 +14,9 @@ services:
     volumes:
       - ./data:/data
 
-  carlog-demo:
+  chapil-demo:
     build: .
-    container_name: carlog-demo
+    container_name: chapil-demo
     restart: unless-stopped
     ports:
       - "8001:8000"
