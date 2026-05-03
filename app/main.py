@@ -892,15 +892,21 @@ def export_data():
 # ── 주유 ──────────────────────────────────────────────────────────────
 @app.get("/api/fuel")
 def fuel_list():
-    cached = redis_client.get("fuel_list")
-    if cached:
-        return json.loads(cached)
+    try:
+        cached = redis_client.get("fuel_list")
+        if cached:
+            return json.loads(cached)
+    except Exception:
+        pass
 
     conn = get_db()
     rows = conn.execute("SELECT * FROM fuel ORDER BY date DESC, id DESC").fetchall()
     conn.close()
     result = [dict(row) for row in rows]
-    redis_client.setex("fuel_list", 60, json.dumps(result))  # 60초 캐시
+    try:
+        redis_client.setex("fuel_list", 60, json.dumps(result))
+    except Exception:
+        pass
     return result
 
 
@@ -908,7 +914,8 @@ def fuel_list():
 @app.post("/api/fuel", status_code=201)
 def fuel_create(body: FuelBody):
     conn = get_db()
-    redis_client.delete("fuel_list")
+    try: redis_client.delete("fuel_list")
+    except Exception: pass
     last = conn.execute(
         "SELECT odometer, liters FROM fuel ORDER BY date DESC, id DESC LIMIT 1"
     ).fetchone()
@@ -982,7 +989,8 @@ def fuel_update(record_id: int, body: FuelBody):
         )
 
     conn.commit()
-    redis_client.delete("fuel_list")
+    try: redis_client.delete("fuel_list")
+    except Exception: pass
     row = conn.execute("SELECT * FROM fuel WHERE id=?", (record_id,)).fetchone()
     conn.close()
     return dict(row)
@@ -995,7 +1003,8 @@ def fuel_delete(record_id: int):
     conn.execute("DELETE FROM fuel WHERE id=?", (record_id,))
     conn.commit()
     conn.close()
-    redis_client.delete("fuel_list")
+    try: redis_client.delete("fuel_list")
+    except Exception: pass
 
 
 # ── 정비 ──────────────────────────────────────────────────────────────
