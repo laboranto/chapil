@@ -1,4 +1,5 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile, File
+from PIL import Image, ImageOps
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, Response
@@ -8,10 +9,15 @@ from typing import Optional, List
 from datetime import date, timedelta, datetime
 from pathlib import Path
 from enum import Enum
+import io
 import os
-import json
+import json, redis
 import time
+import openpyxl
 from database import get_db, init_db
+
+# redis 접속 선언
+redis_client = redis.Redis(host='localhost', port=6379, db=0)
 
 BASE_DIR = Path(__file__).parent
 
@@ -21,6 +27,11 @@ STATIC_DIR = Path(os.environ.get("STATIC_DIR", str(BASE_DIR.parent / "static")))
 # BACKUP_DIR: 자동 백업 저장 경로. Docker에서는 ENV BACKUP_DIR=/data/backups 으로 주입한다.
 BACKUP_DIR = Path(os.environ.get("BACKUP_DIR", str(BASE_DIR.parent / "backups")))
 BACKUP_MAX_COUNT = int(os.environ.get("BACKUP_MAX_COUNT", "30"))
+
+DATA_DIR = Path(os.environ.get("DATA_DIR", str(BASE_DIR.parent / "data")))
+IMAGE_PATH          = DATA_DIR / "car_image.jpg"
+IMAGE_ORIGINAL_PATH = DATA_DIR / "car_image_original.jpg"
+MAX_IMAGE_BYTES = 5 * 1024 * 1024
 
 # DIST_DIR: React 빌드 결과물 경로. Docker 빌드 시에만 존재한다.
 DIST_DIR = BASE_DIR / "frontend" / "dist"
@@ -321,6 +332,7 @@ class FuelBody(BaseModel):
     unit_price: Optional[int] = None
     liters: Optional[float] = None
     odometer: int
+    location: Optional[str] = None
     memo: Optional[str] = None
 
 
@@ -329,6 +341,7 @@ class MaintenanceBody(BaseModel):
     item: str
     amount: int = 0
     odometer: int
+    location: Optional[str] = None
     memo: Optional[str] = None
 
 
@@ -337,6 +350,7 @@ class OtherBody(BaseModel):
     item: str
     amount: int = 0
     odometer: Optional[int] = None
+    location: Optional[str] = None
     memo: Optional[str] = None
 
 
@@ -366,6 +380,7 @@ class ImportRecordFuel(BaseModel):
     unit_price: Optional[int] = None
     liters: Optional[float] = None
     odometer: int
+    location: Optional[str] = None
     memo: str = ""
 
 
@@ -374,6 +389,7 @@ class ImportRecordMaintenance(BaseModel):
     item: str
     amount: int = 0
     odometer: int
+    location: Optional[str] = None
     memo: str = ""
 
 
@@ -382,6 +398,7 @@ class ImportRecordOther(BaseModel):
     item: str
     amount: int = 0
     odometer: Optional[int] = None
+    location: Optional[str] = None
     memo: str = ""
 
 
@@ -439,7 +456,9 @@ def get_dashboard():
     other_30d = conn.execute("SELECT SUM(amount) as total FROM other WHERE date >= ?", (cutoff,)).fetchone()["total"] or 0
 
     avg_economy = conn.execute(
-        "SELECT AVG(fuel_economy) as avg FROM fuel WHERE fuel_economy IS NOT NULL AND fuel_economy > 0"
+        "SELECT AVG(fuel_economy) as avg FROM fuel"
+        " WHERE fuel_economy IS NOT NULL AND fuel_economy > 0 AND fuel_economy <= 50"
+        " AND odometer > 0 AND (interval_km IS NULL OR interval_km < odometer * 0.95)"
     ).fetchone()["avg"]
 
     latest_odometer_row = conn.execute("""
@@ -516,23 +535,216 @@ def update_settings(body: SettingsBody):
     return fields
 
 
+# ── 차량 이미지 ───────────────────────────────────────────────────────
+
+@app.post("/api/settings/image/original", status_code=201)
+async def upload_car_image_original(file: UploadFile = File(...)):
+    content = await file.read()
+    if len(content) > MAX_IMAGE_BYTES:
+        raise HTTPException(status_code=413, detail="이미지 파일은 5MB 이하여야 합니다.")
+    try:
+        img = Image.open(io.BytesIO(content))
+        img = ImageOps.exif_transpose(img)
+        img = img.convert("RGB")
+        DATA_DIR.mkdir(parents=True, exist_ok=True)
+        img.save(IMAGE_ORIGINAL_PATH, "JPEG", quality=95, optimize=True)
+    except Exception:
+        raise HTTPException(status_code=400, detail="이미지 파일을 처리할 수 없습니다.")
+    return {"ok": True}
+
+
+@app.get("/api/settings/image/original")
+def get_car_image_original():
+    if not IMAGE_ORIGINAL_PATH.exists():
+        raise HTTPException(status_code=404, detail="원본 이미지가 없습니다.")
+    return FileResponse(IMAGE_ORIGINAL_PATH, media_type="image/jpeg")
+
+
+@app.post("/api/settings/image", status_code=201)
+async def upload_car_image(file: UploadFile = File(...)):
+    content = await file.read()
+    if len(content) > MAX_IMAGE_BYTES:
+        raise HTTPException(status_code=413, detail="이미지 파일은 5MB 이하여야 합니다.")
+    try:
+        img = Image.open(io.BytesIO(content))
+        img = ImageOps.exif_transpose(img)
+        img = img.convert("RGB")
+        DATA_DIR.mkdir(parents=True, exist_ok=True)
+        img.save(IMAGE_PATH, "JPEG", quality=85, optimize=True)
+    except Exception:
+        raise HTTPException(status_code=400, detail="이미지 파일을 처리할 수 없습니다.")
+    return {"ok": True}
+
+
+@app.get("/api/settings/image")
+def get_car_image():
+    if not IMAGE_PATH.exists():
+        raise HTTPException(status_code=404, detail="이미지가 없습니다.")
+    return FileResponse(IMAGE_PATH, media_type="image/jpeg")
+
+
+@app.delete("/api/settings/image", status_code=204)
+def delete_car_image():
+    if IMAGE_PATH.exists():
+        IMAGE_PATH.unlink()
+    if IMAGE_ORIGINAL_PATH.exists():
+        IMAGE_ORIGINAL_PATH.unlink()
+
+
 # ── 데이터 가져오기 / 내보내기 ─────────────────────────────────────────
 
-@app.get("/api/import/template")
-def import_template():
-    """예제 JSON 파일 다운로드 — LLM에게 차필 형식을 알려주기 위한 샘플"""
-    content = json.dumps(IMPORT_TEMPLATE, ensure_ascii=False, indent=2)
-    return Response(
-        content=content,
-        media_type="application/json",
-        headers={"Content-Disposition": "attachment; filename=chapil_template.json"},
-    )
+# @app.get("/api/import/template")
+# def import_template():
+#     """예제 JSON 파일 다운로드 — LLM에게 차필 형식을 알려주기 위한 샘플"""
+#     content = json.dumps(IMPORT_TEMPLATE, ensure_ascii=False, indent=2)
+#     return Response(
+#         content=content,
+#         media_type="application/json",
+#         headers={"Content-Disposition": "attachment; filename=chapil_template.json"},
+#     )
 
 
-@app.get("/api/import/prompt")
-def import_prompt():
-    """LLM에게 전달할 변환 프롬프트 반환"""
-    return {"prompt": IMPORT_PROMPT}
+# @app.get("/api/import/prompt")
+# def import_prompt():
+#     """LLM에게 전달할 변환 프롬프트 반환"""
+#     return {"prompt": IMPORT_PROMPT}
+
+
+# ── 마이클 xlsx 파싱 헬퍼 ─────────────────────────────────────────────
+
+def _cell_str(cell) -> str:
+    return str(cell.value).strip() if cell.value is not None else ""
+
+def _to_int(val: str) -> Optional[int]:
+    if not val:
+        return None
+    try:
+        return int(float(val.replace(",", "")))
+    except (ValueError, AttributeError):
+        return None
+
+def _to_float(val: str) -> Optional[float]:
+    if not val:
+        return None
+    try:
+        return float(val.replace(",", ""))
+    except (ValueError, AttributeError):
+        return None
+
+def _parse_date(val: str) -> str:
+    """2026.02.26 → 2026-02-26, 이미 - 형식이면 그대로"""
+    return val.replace(".", "-")
+
+
+@app.post("/api/import/xlsx")
+async def import_xlsx(file: UploadFile = File(...)):
+    """
+    마이클 xlsx 파일을 파싱하여 /api/import/preview 와 동일한 포맷으로 반환.
+    DB에는 저장하지 않는다. confirm은 기존 /api/import/confirm 을 사용한다.
+    """
+    content = await file.read()
+    try:
+        wb = openpyxl.load_workbook(io.BytesIO(content), read_only=True, data_only=True)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"xlsx 파일을 열 수 없습니다: {e}")
+
+    fuel_records: List[ImportRecordFuel] = []
+    maint_records: List[ImportRecordMaintenance] = []
+    other_records: List[ImportRecordOther] = []
+    errors: List[str] = []
+
+    # 주유(충전) 시트
+    if "주유(충전)" in wb.sheetnames:
+        ws = wb["주유(충전)"]
+        for i, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
+            if not row or row[0] is None:
+                continue
+            try:
+                cols = [str(c).strip() if c is not None else "" for c in row]
+                raw_date = cols[0]
+                ftype    = cols[1] if cols[1] else "가득주유"
+                amount   = _to_int(cols[2]) or 0
+                unit_price = _to_int(cols[3])
+                liters   = _to_float(cols[4])
+                odometer = _to_int(cols[6]) or 0
+                location = cols[7] or None
+                memo     = cols[10] if len(cols) > 10 else ""
+                parsed_date = _parse_date(raw_date)
+                date.fromisoformat(parsed_date)  # 날짜 유효성 검사
+                fuel_records.append(ImportRecordFuel(
+                    date=parsed_date, type=ftype, amount=amount,
+                    unit_price=unit_price, liters=liters, odometer=odometer,
+                    location=location, memo=memo,
+                ))
+            except ValueError:
+                errors.append(f"주유 {i}행: 날짜 형식 오류 ({row[0]!r})")
+            except Exception as e:
+                errors.append(f"주유 {i}행: {e}")
+
+    # 정비 시트
+    if "정비" in wb.sheetnames:
+        ws = wb["정비"]
+        for i, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
+            if not row or row[0] is None:
+                continue
+            try:
+                cols = [str(c).strip() if c is not None else "" for c in row]
+                parsed_date = _parse_date(cols[0])
+                date.fromisoformat(parsed_date)
+                item     = cols[2] if len(cols) > 2 else ""
+                amount   = _to_int(cols[3]) or 0
+                odometer = _to_int(cols[4]) or 0
+                location = cols[5] if len(cols) > 5 else None
+                memo     = cols[6] if len(cols) > 6 else ""
+                maint_records.append(ImportRecordMaintenance(
+                    date=parsed_date, item=item, amount=amount,
+                    odometer=odometer, location=location or None, memo=memo,
+                ))
+            except ValueError:
+                errors.append(f"정비 {i}행: 날짜 형식 오류 ({row[0]!r})")
+            except Exception as e:
+                errors.append(f"정비 {i}행: {e}")
+
+    # 기타 시트
+    if "기타" in wb.sheetnames:
+        ws = wb["기타"]
+        for i, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
+            if not row or row[0] is None:
+                continue
+            try:
+                cols = [str(c).strip() if c is not None else "" for c in row]
+                parsed_date = _parse_date(cols[0])
+                date.fromisoformat(parsed_date)
+                item     = cols[2] if len(cols) > 2 else ""
+                amount   = _to_int(cols[3]) or 0
+                odometer = _to_int(cols[4])
+                location = cols[5] if len(cols) > 5 else None
+                memo     = cols[6] if len(cols) > 6 else ""
+                other_records.append(ImportRecordOther(
+                    date=parsed_date, item=item, amount=amount,
+                    odometer=odometer, location=location or None, memo=memo,
+                ))
+            except ValueError:
+                errors.append(f"기타 {i}행: 날짜 형식 오류 ({row[0]!r})")
+            except Exception as e:
+                errors.append(f"기타 {i}행: {e}")
+
+    wb.close()
+
+    return {
+        "counts": {
+            "fuel":        len(fuel_records),
+            "maintenance": len(maint_records),
+            "other":       len(other_records),
+        },
+        "records": {
+            "fuel":        [r.model_dump() for r in fuel_records],
+            "maintenance": [r.model_dump() for r in maint_records],
+            "other":       [r.model_dump() for r in other_records],
+        },
+        "vehicle": None,
+        "errors": errors,
+    }
 
 
 @app.post("/api/import/preview")
@@ -610,29 +822,31 @@ def import_confirm(body: ImportBody):
         ).fetchone()
         interval_km = None
         fuel_economy = None
-        if last:
-            interval_km = record.odometer - last["odometer"]
-            if record.liters and record.liters > 0 and interval_km > 0:
-                fuel_economy = round(interval_km / record.liters, 2)
+        if last and record.odometer > 0:
+            diff = record.odometer - last["odometer"]
+            if diff > 0:
+                interval_km = diff
+                if record.liters and record.liters > 0:
+                    fuel_economy = round(interval_km / record.liters, 2)
         conn.execute(
-            "INSERT INTO fuel (date, type, amount, unit_price, liters, odometer, interval_km, fuel_economy, memo)"
-            " VALUES (?,?,?,?,?,?,?,?,?)",
+            "INSERT INTO fuel (date, type, amount, unit_price, liters, odometer, interval_km, fuel_economy, location, memo)"
+            " VALUES (?,?,?,?,?,?,?,?,?,?)",
             (record.date, record.type, record.amount, record.unit_price,
-             record.liters, record.odometer, interval_km, fuel_economy, record.memo),
+             record.liters, record.odometer, interval_km, fuel_economy, record.location, record.memo),
         )
 
     # 정비
     for record in body.maintenance:
         conn.execute(
-            "INSERT INTO maintenance (date, category, item, amount, odometer, memo) VALUES (?,?,?,?,?,?)",
-            (record.date, "정비", record.item, record.amount, record.odometer, record.memo),
+            "INSERT INTO maintenance (date, category, item, amount, odometer, location, memo) VALUES (?,?,?,?,?,?,?)",
+            (record.date, "정비", record.item, record.amount, record.odometer, record.location, record.memo),
         )
 
     # 기타
     for record in body.other:
         conn.execute(
-            "INSERT INTO other (date, category, item, amount, odometer, memo) VALUES (?,?,?,?,?,?)",
-            (record.date, "기타", record.item, record.amount, record.odometer, record.memo),
+            "INSERT INTO other (date, category, item, amount, odometer, location, memo) VALUES (?,?,?,?,?,?,?)",
+            (record.date, "기타", record.item, record.amount, record.odometer, record.location, record.memo),
         )
 
     conn.commit()
@@ -678,32 +892,41 @@ def export_data():
 # ── 주유 ──────────────────────────────────────────────────────────────
 @app.get("/api/fuel")
 def fuel_list():
+    cached = redis_client.get("fuel_list")
+    if cached:
+        return json.loads(cached)
+
     conn = get_db()
     rows = conn.execute("SELECT * FROM fuel ORDER BY date DESC, id DESC").fetchall()
     conn.close()
-    return [dict(r) for r in rows]
+    result = [dict(row) for row in rows]
+    redis_client.setex("fuel_list", 60, json.dumps(result))  # 60초 캐시
+    return result
 
 
 # status_code=201: REST 관례상 리소스 생성 성공 시 201 Created를 반환한다.
 @app.post("/api/fuel", status_code=201)
 def fuel_create(body: FuelBody):
     conn = get_db()
+    redis_client.delete("fuel_list")
     last = conn.execute(
         "SELECT odometer, liters FROM fuel ORDER BY date DESC, id DESC LIMIT 1"
     ).fetchone()
 
     interval_km = None
     fuel_economy = None
-    if last:
-        interval_km = body.odometer - last["odometer"]
-        if body.liters and body.liters > 0 and interval_km > 0:
-            fuel_economy = round(interval_km / body.liters, 2)
+    if last and body.odometer > 0:
+        diff = body.odometer - last["odometer"]
+        if diff > 0:
+            interval_km = diff
+            if body.liters and body.liters > 0:
+                fuel_economy = round(interval_km / body.liters, 2)
 
     cursor = conn.execute(
-        "INSERT INTO fuel (date, type, amount, unit_price, liters, odometer, interval_km, fuel_economy, memo)"
-        " VALUES (?,?,?,?,?,?,?,?,?)",
+        "INSERT INTO fuel (date, type, amount, unit_price, liters, odometer, interval_km, fuel_economy, location, memo)"
+        " VALUES (?,?,?,?,?,?,?,?,?,?)",
         (body.date, body.type, body.amount, body.unit_price, body.liters,
-         body.odometer, interval_km, fuel_economy, body.memo),
+         body.odometer, interval_km, fuel_economy, body.location, body.memo),
     )
     conn.commit()
     row = conn.execute("SELECT * FROM fuel WHERE id=?", (cursor.lastrowid,)).fetchone()
@@ -719,9 +942,9 @@ def fuel_update(record_id: int, body: FuelBody):
         raise HTTPException(status_code=404, detail="레코드를 찾을 수 없습니다.")
 
     conn.execute(
-        "UPDATE fuel SET date=?, type=?, amount=?, unit_price=?, liters=?, odometer=?, memo=? WHERE id=?",
+        "UPDATE fuel SET date=?, type=?, amount=?, unit_price=?, liters=?, odometer=?, location=?, memo=? WHERE id=?",
         (body.date, body.type, body.amount, body.unit_price, body.liters,
-         body.odometer, body.memo, record_id),
+         body.odometer, body.location, body.memo, record_id),
     )
 
     # 수정된 기록의 앞뒤 레코드를 찾아 연비를 재계산한다.
@@ -736,10 +959,12 @@ def fuel_update(record_id: int, body: FuelBody):
 
     interval_km = None
     fuel_economy = None
-    if prev:
-        interval_km = body.odometer - prev["odometer"]
-        if body.liters and body.liters > 0 and interval_km > 0:
-            fuel_economy = round(interval_km / body.liters, 2)
+    if prev and body.odometer > 0:
+        diff = body.odometer - prev["odometer"]
+        if diff > 0:
+            interval_km = diff
+            if body.liters and body.liters > 0:
+                fuel_economy = round(interval_km / body.liters, 2)
     conn.execute(
         "UPDATE fuel SET interval_km=?, fuel_economy=? WHERE id=?",
         (interval_km, fuel_economy, record_id),
@@ -757,6 +982,7 @@ def fuel_update(record_id: int, body: FuelBody):
         )
 
     conn.commit()
+    redis_client.delete("fuel_list")
     row = conn.execute("SELECT * FROM fuel WHERE id=?", (record_id,)).fetchone()
     conn.close()
     return dict(row)
@@ -769,6 +995,7 @@ def fuel_delete(record_id: int):
     conn.execute("DELETE FROM fuel WHERE id=?", (record_id,))
     conn.commit()
     conn.close()
+    redis_client.delete("fuel_list")
 
 
 # ── 정비 ──────────────────────────────────────────────────────────────
@@ -791,8 +1018,8 @@ def maintenance_list():
 def maintenance_create(body: MaintenanceBody):
     conn = get_db()
     cursor = conn.execute(
-        "INSERT INTO maintenance (date, category, item, amount, odometer, memo) VALUES (?,?,?,?,?,?)",
-        (body.date, "정비", body.item, body.amount, body.odometer, body.memo),
+        "INSERT INTO maintenance (date, category, item, amount, odometer, location, memo) VALUES (?,?,?,?,?,?,?)",
+        (body.date, "정비", body.item, body.amount, body.odometer, body.location, body.memo),
     )
     conn.commit()
     row = conn.execute("SELECT * FROM maintenance WHERE id=?", (cursor.lastrowid,)).fetchone()
@@ -807,8 +1034,8 @@ def maintenance_update(record_id: int, body: MaintenanceBody):
         conn.close()
         raise HTTPException(status_code=404, detail="레코드를 찾을 수 없습니다.")
     conn.execute(
-        "UPDATE maintenance SET date=?, item=?, amount=?, odometer=?, memo=? WHERE id=?",
-        (body.date, body.item, body.amount, body.odometer, body.memo, record_id),
+        "UPDATE maintenance SET date=?, item=?, amount=?, odometer=?, location=?, memo=? WHERE id=?",
+        (body.date, body.item, body.amount, body.odometer, body.location, body.memo, record_id),
     )
     conn.commit()
     row = conn.execute("SELECT * FROM maintenance WHERE id=?", (record_id,)).fetchone()
@@ -842,8 +1069,8 @@ def other_list():
 def other_create(body: OtherBody):
     conn = get_db()
     cursor = conn.execute(
-        "INSERT INTO other (date, category, item, amount, odometer, memo) VALUES (?,?,?,?,?,?)",
-        (body.date, "기타", body.item, body.amount, body.odometer, body.memo),
+        "INSERT INTO other (date, category, item, amount, odometer, location, memo) VALUES (?,?,?,?,?,?,?)",
+        (body.date, "기타", body.item, body.amount, body.odometer, body.location, body.memo),
     )
     conn.commit()
     row = conn.execute("SELECT * FROM other WHERE id=?", (cursor.lastrowid,)).fetchone()
@@ -858,8 +1085,8 @@ def other_update(record_id: int, body: OtherBody):
         conn.close()
         raise HTTPException(status_code=404, detail="레코드를 찾을 수 없습니다.")
     conn.execute(
-        "UPDATE other SET date=?, item=?, amount=?, odometer=?, memo=? WHERE id=?",
-        (body.date, body.item, body.amount, body.odometer, body.memo, record_id),
+        "UPDATE other SET date=?, item=?, amount=?, odometer=?, location=?, memo=? WHERE id=?",
+        (body.date, body.item, body.amount, body.odometer, body.location, body.memo, record_id),
     )
     conn.commit()
     row = conn.execute("SELECT * FROM other WHERE id=?", (record_id,)).fetchone()
