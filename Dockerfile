@@ -21,7 +21,7 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-RUN pip install --no-cache-dir fastapi uvicorn redis openpyxl pillow
+RUN pip install --no-cache-dir fastapi uvicorn redis openpyxl pillow python-multipart
 
 # 백엔드 소스
 COPY app/ /app/
