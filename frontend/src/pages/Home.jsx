@@ -45,6 +45,7 @@ export default function Home() {
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null)
   const onCropComplete = useCallback((_, pixels) => setCroppedAreaPixels(pixels), [])
   const originalFileRef = useRef(null)
+  const [uploading, setUploading] = useState(false)
 
   const openCrop = (src, mode) => {
     setCrop({ x: 0, y: 0 })
@@ -63,12 +64,12 @@ export default function Home() {
   }
 
   const handleEdit = async () => {
-    const originalUrl = api.carImageOriginalUrl(Date.now())
-    const res = await fetch(originalUrl, { method: 'HEAD' })
-    openCrop(res.ok ? originalUrl : api.carImageUrl(imgTs), 'edit')
+    const originalUrl = api.carImageOriginalUrl()
+    openCrop(originalUrl ?? api.carImageUrl(), 'edit')
   }
 
   const handleCropConfirm = async () => {
+    setUploading(true)
     try {
       const blob = await getCroppedBlob(cropSrc, croppedAreaPixels)
       const croppedFile = new File([blob], 'car_image.jpg', { type: 'image/jpeg' })
@@ -83,6 +84,8 @@ export default function Home() {
       setCropSrc(null)
     } catch (err) {
       alert(`업로드 실패: ${err.message}`)
+    } finally {
+      setUploading(false)
     }
   }
 
@@ -171,8 +174,13 @@ const { fuelTerm } = useSettings()
         />
       </div>
       <div className="crop-controls">
-        <button className="crop-btn" onClick={handleCropCancel}>취소</button>
-        <button className="crop-btn crop-btn-confirm" onClick={handleCropConfirm}>확인</button>
+        {uploading
+          ? <span className="crop-uploading">잠시만 기다려주세요...</span>
+          : <>
+              <button className="crop-btn" onClick={handleCropCancel}>취소</button>
+              <button className="crop-btn crop-btn-confirm" onClick={handleCropConfirm}>확인</button>
+            </>
+        }
       </div>
     </div>
   )
@@ -322,7 +330,7 @@ const { fuelTerm } = useSettings()
 
       <div className="section-footer">
         오늘도 안전운전 하세요
-        <p>차필(chapil) 2026 | v26.5.3a</p>
+        <p>차필(chapil) 2026 | v26.5.22b</p>
       </div>
 
       </div>

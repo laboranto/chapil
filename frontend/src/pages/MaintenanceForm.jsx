@@ -61,8 +61,8 @@ export default function MaintenanceForm() {
   return (
     <form onSubmit={handleSubmit}>
       <div className="topbar">
-        <button type="button" className="btn-cancel" onClick={() => navigate('/maintenance')}>✕</button>
-        <button type="submit" className="btn-submit">✓</button>
+        <button type="button" className="btn-cancel" aria-label="취소" onClick={() => navigate('/maintenance')}>✕</button>
+        <button type="submit" className="btn-submit" aria-label="저장"></button>
       </div>
       <div className="topbg"></div>
       <div className="content">

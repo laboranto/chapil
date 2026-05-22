@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { api } from '../api'
 import { useSettings } from '../context/SettingsContext'
 import DownloadIcon from '../assets/symbols/download.svg?react'
@@ -21,18 +21,22 @@ const FUEL_LABELS = {
 
 export default function Settings() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const isOnboarding = searchParams.get('onboarding') === '1'
   const { refreshSettings, fuelTerm } = useSettings()
-  const fileInputRef = useRef(null)
-
   const [form, setForm] = useState({
     car_birth: '', car_type: '', car_brand: '',
     car_model: '', car_plate: '', car_fuel: '',
   })
   const [options, setOptions] = useState({ car_type: [], car_fuel: [] })
 
+  const [errors, setErrors] = useState({})
+
   const [previewData, setPreviewData] = useState(null)
   const [importing, setImporting]     = useState(false)
+  const [exporting, setExporting]     = useState(false)
   const [importDone, setImportDone]   = useState(null)
+  const [exportDone, setExportDone]   = useState('')
   const [importError, setImportError] = useState('')
 
   useEffect(() => {
@@ -46,8 +50,24 @@ export default function Settings() {
 
   const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }))
 
+  const REQUIRED = {
+    car_brand: '브랜드',
+    car_model: '차량 이름',
+    car_plate: '차량번호',
+    car_fuel:  '연료',
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
+    const newErrors = {}
+    for (const [key, label] of Object.entries(REQUIRED)) {
+      if (!form[key]) newErrors[key] = `${label}을(를) 입력해 주세요`
+    }
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors)
+      return
+    }
+    setErrors({})
     await api.updateSettings({
       ...form,
       car_type: form.car_type || null,
@@ -57,15 +77,25 @@ export default function Settings() {
     navigate('/')
   }
 
-  const handleXlsxFile = async (e) => {
-    const file = e.target.files[0]
-    if (!file) return
-    e.target.value = ''
+  const handleExport = async () => {
+    setExporting(true)
+    setExportDone(false)
+    try {
+      const filename = await api.exportToFile()
+      setExportDone(filename)
+    } catch (err) {
+      setImportError(`내보내기 실패: ${err.message}`)
+    } finally {
+      setExporting(false)
+    }
+  }
+
+  const handleImport = async () => {
     setImportError('')
     setPreviewData(null)
     setImportDone(null)
     try {
-      const result = await api.importXlsx(file)
+      const result = await api.importFromFile()
       setPreviewData(result)
     } catch (err) {
       setImportError(`파일 오류: ${err.message}`)
@@ -102,8 +132,11 @@ export default function Settings() {
   return (
     <>
       <div className="topbar">
+        {!isOnboarding && (
+          <button type="button" className="btn-cancel" aria-label="취소" onClick={() => navigate(-1)}>✕</button>
+        )}
         <h1>설정</h1>
-        <button type="submit" form="settings-form" className="btn-submit">✓</button>
+        <button type="submit" form="settings-form" className="btn-submit" aria-label="저장"></button>
       </div>
       <div className="topbg"></div>
       <div className="content">
@@ -129,6 +162,7 @@ export default function Settings() {
               onChange={set('car_brand')}
               placeholder="예: 현대, 기아, BMW"
             />
+            {errors.car_brand && <p className="field-error">{errors.car_brand}</p>}
           </div>
 
           <div className="form-group">
@@ -139,6 +173,7 @@ export default function Settings() {
               onChange={set('car_model')}
               placeholder="예: 아반떼, 코나, 아이오닉5"
             />
+            {errors.car_model && <p className="field-error">{errors.car_model}</p>}
           </div>
 
           <div className="form-group">
@@ -149,6 +184,7 @@ export default function Settings() {
               onChange={set('car_plate')}
               placeholder="예: 123가4567"
             />
+            {errors.car_plate && <p className="field-error">{errors.car_plate}</p>}
           </div>
 
           <div className="form-group">
@@ -168,6 +204,7 @@ export default function Settings() {
                 <option key={o.code} value={o.code}>{o.label}</option>
               ))}
             </select>
+            {errors.car_fuel && <p className="field-error">{errors.car_fuel}</p>}
           </div>
 
         </form>
@@ -176,22 +213,18 @@ export default function Settings() {
         <div className="section-advice">
           <p>차필에서 작성하신 데이터는 사용자의 기기 내부에 저장되며, 어디에도 전송되지 않습니다. 사용자께서 주기적으로 '데이터 내보내기'를 통하여 개인 드라이브, 클라우드 등 안전한 장소에 백업(보관)하실 것을 권장 드립니다.</p>
           <p>또한 앱에서 자체 백업을 진행하고 있습니다. 자동 백업 경로는 다음과 같습니다.</p>
-          <p className="prompt">(앱 설치 경로)/backups/chapil_backup_(날짜).json</p>
+          <p className="prompt">(앱 디렉터리)/backups/chapil_backup_(날짜).json</p>
+          <p>또한, 기존에 다른 앱에서 차계부를 작성하고 계셨다면 해당 앱에서 엑셀 파일(xlsx)로 저장한 차계부 데이터를 차필에 변환하는 기능을 지원하고 있습니다. 아래 '데이터 가져오기' 버튼 하나로 편리하게 이용하세요.</p>
+
         </div>
         <div className="set-migrate">
-          <button className="btn" onClick={() => fileInputRef.current?.click()}>
+          <button className="btn" onClick={handleImport}>
             <DownloadIcon/>데이터 가져오기
           </button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            onChange={handleXlsxFile}
-            style={{ display: 'none' }}
-          />
-          <a className="btn" href={api.exportUrl()} download="chapil_export.json">
-            <UploadIcon/>데이터 내보내기
-          </a>
+          <button className="btn" onClick={handleExport} disabled={exporting}>
+            <UploadIcon/>{exporting ? '내보내는 중…' : '데이터 내보내기'}
+          </button>
+          {exportDone && <p className="import-done-inline">backups/{exportDone}에 저장됐어요</p>}
         </div>
 
         {importError && <p className="import-error">{importError}</p>}
@@ -226,13 +259,21 @@ export default function Settings() {
                 <span>정비 <b>{previewData.counts.maintenance}</b>건 | </span>
                 <span>기타 <b>{previewData.counts.other}</b>건</span>
               </div>
-              <button
-                className="btn btn-import-confirm"
-                onClick={handleConfirm}
-                disabled={importing || previewData.errors.length > 0}
-              >
-                가져오기 확정
-              </button>
+              <div className="import-actions">
+                <button
+                  className="btn"
+                  onClick={() => { setPreviewData(null); setImportError('') }}
+                >
+                  취소
+                </button>
+                <button
+                  className="btn btn-import-confirm"
+                  onClick={handleConfirm}
+                  disabled={importing || previewData.errors.length > 0}
+                >
+                  가져오기 확정
+                </button>
+              </div>
             </div>
           </div>
         )}
