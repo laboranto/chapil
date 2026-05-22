@@ -9,25 +9,43 @@
 <img src="screenshot_v260428a.jpg" alt="8개의 스크린샷이 4열 2행으로 나열되어 있다. 윗줄은 라이트모드, 아랫줄은 다크모드 테마가 적용된 모습. 왼쪽부터 차례로 홈, 주유 기록, 주유 기록 양식, 설정 화면이다." width="800">
 
 ## 기술 스택
-- Backend: FastAPI (Python) Rest API
+- Backend: FastAPI (Python) REST API
 - Database: SQLite
-- Frontend: React
-- Infra: Docker, Docker Compose, Tailscale VPN
+- Frontend: React + Vite (SPA)
+- Native App: Capacitor (iOS / Android)
+- Infra: Docker, Docker Compose, Tailscale VPN, Codemagic CI/CD
 - License: LGPL
 
 ## 디렉토리 구조
 ```
 chapil/
-├── app/                              # Python 백엔드
-├── frontend/                      # React 프론트엔드
-├── data/carlog.db              # SQLite DB (자동 생성)
+├── app/                      # Python 백엔드 (FastAPI)
+│   ├── main.py               # API 진입점
+│   ├── database.py           # DB 연결 및 쿼리
+│   └── seed_demo.json        # 데모 초기 데이터
+├── frontend/                 # React 프론트엔드 (Vite)
+│   ├── src/
+│   │   ├── pages/            # 페이지 컴포넌트
+│   │   ├── components/       # 공용 컴포넌트
+│   │   ├── context/          # React Context
+│   │   ├── assets/           # 폰트, 아이콘 등
+│   │   ├── App.jsx           # 라우팅
+│   │   ├── api.js            # 백엔드 API 호출
+│   │   └── index.css         # 전역 스타일
+│   └── public/               # PWA manifest, 아이콘
+├── android/                  # Capacitor Android 프로젝트
+├── ios/                      # Capacitor iOS 프로젝트
+├── assets/                   # 앱 아이콘 및 스플래시 이미지 원본
+├── capacitor.config.json     # Capacitor 설정
+├── codemagic.yaml            # 앱스토어 빌드 CI/CD 설정
 ├── Dockerfile
-└── docker-compose.yml
+├── docker-compose.yml
+└── data/carlog.db            # SQLite DB (자동 생성)
 ```
 
 # 사용 방법
-## [ 계획 중 ] 애플 앱스토어, 구글 플레이를 통한 설치
-현재 이를 위한 준비 단계에 있습니다.
+## [ 준비 중 ] 애플 앱스토어, 구글 플레이를 통한 설치
+Capacitor 기반의 네이티브 앱 빌드 환경이 구축되어 있으며, 앱스토어 출시를 준비 중입니다.
 
 ## Docker와 VPN을 활용한 셀프호스팅
 저는 이 앱을 집에 있는 NAS에 설치된 Docker를 통해 배포하여 사용하고 있습니다. 사용자가 직접 설치하여 사용할 것을 염두에 둔 것으로, 아직 로그인 기능을 구현하지 않았습니다. 장기적으로는 지원할 계획을 갖고 있습니다. 지금은 각자 사용하시는 NAS를 비롯한 홈서버, 웹호스팅(AWS 등) 등으로 직접 구동하셔야 합니다.
@@ -63,6 +81,8 @@ docker compose up -d --build
 - `/backups` 경로 안에 .json 형식의 백업 파일이 자동으로 저장됩니다. 이는 앱 실행마다 진행되며, 24시간 이내에 최대 1회까지 진행됩니다. 최대 30개까지 저장되며, 이를 넘어가면 오래된 파일 순서대로 자동 삭제됩니다.
 
 # 업데이트 기록
+### v26.5.22b
+- 구글 플레이스토어 및 애플 앱스토어 출시를 위한 컴포넌트 변경 등 준비 작업
 ### v26.5.3a
 ##### 차계부 옮기기
 - 데이터 가져오기 기능이 더욱 간편해졌습니다. 이제 기존에 사용하던 차계부 앱에서 저장한 엑셀 파일(xlsx) 하나만 준비하세요.
