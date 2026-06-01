@@ -1125,4 +1125,7 @@ if DIST_DIR.exists():
         target = DIST_DIR / full_path
         if target.exists() and target.is_file():
             return FileResponse(target)
-        return FileResponse(DIST_DIR / "index.html")
+        return FileResponse(
+            DIST_DIR / "index.html",
+            headers={"Cache-Control": "no-cache, no-store, must-revalidate"},
+        )
