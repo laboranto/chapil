@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { api } from '../api'
 import { useSettings } from '../context/SettingsContext'
@@ -24,6 +24,7 @@ export default function Settings() {
   const [searchParams] = useSearchParams()
   const isOnboarding = searchParams.get('onboarding') === '1'
   const { refreshSettings, fuelTerm } = useSettings()
+  const importFileRef = useRef(null)
   const [form, setForm] = useState({
     car_birth: '', car_type: '', car_brand: '',
     car_model: '', car_plate: '', car_fuel: '',
@@ -90,12 +91,17 @@ export default function Settings() {
     }
   }
 
-  const handleImport = async () => {
+  const handleImport = () => importFileRef.current?.click()
+
+  const handleFileChange = async (e) => {
+    const file = e.target.files[0]
+    e.target.value = ''
+    if (!file) return
     setImportError('')
     setPreviewData(null)
     setImportDone(null)
     try {
-      const result = await api.importFromFile()
+      const result = await api.importFromFile(file)
       setPreviewData(result)
     } catch (err) {
       setImportError(`파일 오류: ${err.message}`)
@@ -132,9 +138,10 @@ export default function Settings() {
   return (
     <>
       <div className="topbar">
-        {!isOnboarding && (
-          <button type="button" className="btn-cancel" aria-label="취소" onClick={() => navigate(-1)}>✕</button>
-        )}
+        {!isOnboarding
+          ? <button type="button" className="btn-cancel" aria-label="취소" onClick={() => navigate(-1)}>✕</button>
+          : <span />
+        }
         <h1>설정</h1>
         <button type="submit" form="settings-form" className="btn-submit" aria-label="저장"></button>
       </div>
@@ -212,9 +219,7 @@ export default function Settings() {
         <div className="section-header">데이터 관리</div>
         <div className="section-advice">
           <p>차필에서 작성하신 데이터는 사용자의 기기 내부에 저장되며, 어디에도 전송되지 않습니다. 사용자께서 주기적으로 '데이터 내보내기'를 통하여 개인 드라이브, 클라우드 등 안전한 장소에 백업(보관)하실 것을 권장 드립니다.</p>
-          <p>또한 앱에서 자체 백업을 진행하고 있습니다. 자동 백업 경로는 다음과 같습니다.</p>
-          <p className="prompt">(앱 디렉터리)/backups/chapil_backup_(날짜).json</p>
-          <p>또한, 기존에 다른 앱에서 차계부를 작성하고 계셨다면 해당 앱에서 엑셀 파일(xlsx)로 저장한 차계부 데이터를 차필에 변환하는 기능을 지원하고 있습니다. 아래 '데이터 가져오기' 버튼 하나로 편리하게 이용하세요.</p>
+          <p>기존에 다른 앱에서 차계부를 작성하고 계셨다면 해당 앱에서 엑셀 파일(xlsx)로 저장한 차계부 데이터를 차필에 변환하는 기능을 지원하고 있습니다. 아래 '데이터 가져오기' 버튼을 누르고 JSON 파일을 선택하면 됩니다.</p>
 
         </div>
         <div className="set-migrate">
@@ -224,8 +229,9 @@ export default function Settings() {
           <button className="btn" onClick={handleExport} disabled={exporting}>
             <UploadIcon/>{exporting ? '내보내는 중…' : '데이터 내보내기'}
           </button>
-          {exportDone && <p className="import-done-inline">backups/{exportDone}에 저장됐어요</p>}
+          {exportDone && <p className="import-done-inline">{exportDone} 다운로드 완료</p>}
         </div>
+        <input ref={importFileRef} type="file" accept=".json,application/json" style={{ display: 'none' }} onChange={handleFileChange} />
 
         {importError && <p className="import-error">{importError}</p>}
 
@@ -285,6 +291,13 @@ export default function Settings() {
           </div>
         )}
         {importing && <p className="import-loading">가져오는 중…</p>}
+
+        <div className="section-header">기타</div>
+        <div className="set-migrate">
+          <button className="btn" onClick={() => navigate('/feedback')}>
+            피드백 보내기
+          </button>
+        </div>
 
       </div>
     </>

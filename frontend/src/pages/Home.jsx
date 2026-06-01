@@ -221,7 +221,7 @@ const { fuelTerm } = useSettings()
       <div className="content">
     {/*** 차량 프로필 ***/}
       <div className="car-profile">
-        {settings.Car_plate
+        {settings.car_plate
         ? <h1>{settings.car_plate}</h1>
         : ''}
         <div className="car-model">
@@ -330,7 +330,7 @@ const { fuelTerm } = useSettings()
 
       <div className="section-footer">
         오늘도 안전운전 하세요
-        <p>차필(chapil) 2026 | v26.5.22b</p>
+        <p>차필(chapil) 2026 | v26.6.1b</p>
       </div>
 
       </div>

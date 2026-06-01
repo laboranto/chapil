@@ -1,5 +1,10 @@
 {
-  "appId": "com.example.app",
+  "appId": "com.iranto.chapil",
   "appName": "차필",
-  "webDir": "frontend/dist"
+  "webDir": "frontend/dist",
+  "plugins": {
+    "CapacitorHttp": {
+      "enabled": true
+    }
+  }
 }

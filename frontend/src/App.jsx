@@ -12,6 +12,7 @@ import OtherList from './pages/OtherList'
 import OtherForm from './pages/OtherForm'
 import Settings from './pages/Settings'
 import ImportGuide from './pages/ImportGuide'
+import Feedback from './pages/Feedback'
 
 function AppContent() {
   const { settings, isReady } = useSettings()
@@ -21,10 +22,10 @@ function AppContent() {
 
   const needsOnboarding = !settings.car_type && !settings.car_birth && !settings.car_fuel
   const isOnboarding = location.pathname === '/onboarding'
-  const isSettings = location.pathname === '/settings'
-  const hideNav = isOnboarding || (needsOnboarding && isSettings)
+  const inOnboardingFlow = isOnboarding || new URLSearchParams(location.search).get('onboarding') === '1'
+  const hideNav = inOnboardingFlow
 
-  if (needsOnboarding && !isOnboarding && !isSettings) {
+  if (needsOnboarding && !inOnboardingFlow) {
     return <Navigate to="/onboarding" replace />
   }
 
@@ -44,6 +45,7 @@ function AppContent() {
         <Route path="/other/:id/edit"          element={<OtherForm />} />
         <Route path="/settings"                element={<Settings />} />
         <Route path="/import"                  element={<ImportGuide />} />
+        <Route path="/feedback"                element={<Feedback />} />
       </Routes>
       {!hideNav && <BottomNav />}
       {!hideNav && <div className="bottom-bg"></div>}

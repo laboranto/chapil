@@ -165,7 +165,7 @@ li{
 .topbar .setting-btn svg{
   width:32px;
 }
-.topbar h1 { font-size: 24px; font-weight: 300; flex: 1; }
+.topbar h1 { font-size: 24px; font-weight: 300; position: absolute; left: 50%; transform: translateX(-50%); white-space: nowrap; }
 .topbar-home h1 {
   position: absolute; left: 50%; transform: translateX(-50%);
   pointer-events: none;
@@ -588,6 +588,30 @@ li{
 .select-wrap { position: relative; }
 .select-wrap::after { content: '▾'; position: absolute; right: 13px; top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--text-sub); }
 
+/*** 피드백 ***/
+.feedback-textarea {
+  width: 100%; box-sizing: border-box;
+  padding: 12px; border: var(--border);
+  border-radius: var(--radius-edge);
+  background: var(--card); color: var(--text);
+  font-size: 15px; line-height: 1.6; resize: none;
+}
+.feedback-notice {
+  margin: 12px 0 20px;
+  padding: 12px 14px;
+  background: var(--bg-sub);
+  border-radius: var(--radius-edge);
+  font-size: 13px; color: var(--text-sub); line-height: 1.6;
+}
+.feedback-notice p { margin: 0 0 6px; }
+.feedback-notice ul { margin: 0; padding-left: 18px; }
+.feedback-notice li { margin: 2px 0; }
+.feedback-submit-row { display: flex; justify-content: flex-end; }
+.feedback-done {
+  text-align: center; padding: 60px 0;
+  display: flex; flex-direction: column; align-items: center; gap: 20px;
+}
+
 /*** 온보딩 ***/
 .onboarding {
   display: flex; flex-direction: column;
@@ -602,22 +626,63 @@ li{
   opacity: 0;
   text-align: center;
   margin-top: 40px;
+  min-height: 100px;
 }
 .onboarding-welcome.visible { opacity: 1; animation: fadeIn 0.7s ease; }
 .onboarding-welcome h3 { font-size: 28px; font-weight: 300; }
-.onboarding-btn {
+.onboarding-slide-text {
+  opacity: 0;
+  transition: opacity 0.28s ease;
+}
+.onboarding-slide-text.visible { opacity: 1; }
+.onboarding-feature {
+  font-size: 17px; font-weight: 400;
+  line-height: 1.65;
+  color: var(--text);
+  white-space: pre-line;
+  padding: 0 52px;
+}
+.onboarding-dots {
+  display: flex; gap: 8px;
+  justify-content: center;
+  margin-top: 20px;
+}
+.onboarding-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--text);
+  opacity: 0.2;
+  transition: opacity 0.28s ease;
+}
+.onboarding-dot.active { opacity: 0.8; }
+.onboarding-bottom {
   position: fixed;
   bottom: calc(var(--safe-bottom) + 32px);
   left: 50%; transform: translateX(-50%);
+  display: grid;
+  grid-template-columns: 56px 1fr 56px;
+  align-items: center;
+  gap: 12px;
+  width: calc(100% - 80px);
+  max-width: 340px;
+}
+.onboarding-arrow-btn {
+  width: 56px; height: 56px;
+  border-radius: 50%;
+  background: var(--bg); color: var(--text);
+  border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  animation: fadeIn 0.4s ease;
+}
+.onboarding-arrow-btn:active { background: var(--active); }
+.onboarding-btn {
   padding: 14px 36px;
   background: var(--primary); color: #ffffff;
   border: none; border-radius: var(--radius);
   font-size: 16px; font-weight: 600; cursor: pointer;
   white-space: nowrap;
-  z-index: -1;
-  opacity: 0;
+  animation: fadeIn 0.4s ease;
 }
-.onboarding-btn.visible { z-index: 100; opacity: 1; animation: fadeIn 0.7s ease; }
 .onboarding-btn:hover { background: var(--primary-dark); }
 @keyframes fadeIn {
   from { opacity: 0; }
@@ -625,5 +690,5 @@ li{
 }
 @media (prefers-reduced-motion: reduce) {
   .onboarding-icon path { transition: none !important; }
-  .onboarding-welcome, .onboarding-btn { animation: none !important; }
+  .onboarding-welcome { animation: none !important; }
 }
