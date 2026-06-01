@@ -128,6 +128,8 @@ export default function Settings() {
       setImportDone(result.imported)
       setPreviewData(null)
       await refreshSettings()
+      const updatedSettings = await api.getSettings()
+      setForm(updatedSettings)
     } catch (err) {
       setImportError(`가져오기 실패: ${err.message}`)
     } finally {
