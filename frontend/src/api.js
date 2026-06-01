@@ -1,6 +1,8 @@
 import { getDB } from './db.js';
-import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
-import { Capacitor } from '@capacitor/core';
+import { Capacitor, registerPlugin } from '@capacitor/core';
+import { Filesystem, Directory } from '@capacitor/filesystem';
+
+const FilePlugin = registerPlugin('FilePlugin');
 
 // ── 차량 이미지 인메모리 캐시 ─────────────────────────────────────────
 let _imgUrl = null;
@@ -459,48 +461,54 @@ export const api = {
   },
 
   exportToFile: async () => {
-    const perm = await Filesystem.requestPermissions();
-    if (perm.publicStorage !== 'granted') {
-      throw new Error('저장소 권한이 없습니다.\nAndroid 11 이상은 설정 → 앱 → 차필 → 권한 → 파일 및 미디어 → 모든 파일 관리 허용 후 다시 시도해 주세요.');
-    }
     const data = await api.exportData();
     const json = JSON.stringify(data, null, 2);
-    const dir = Capacitor.getPlatform() === 'ios'
-      ? Directory.Documents
-      : Directory.ExternalStorage;
     const date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
     const filename = `chapil_backup_${date}.json`;
-    await Filesystem.mkdir({ path: 'backups', directory: dir, recursive: true });
-    await Filesystem.writeFile({
-      path: `backups/${filename}`,
-      data: json,
-      directory: dir,
-      encoding: Encoding.UTF8,
-    });
+    if (Capacitor.getPlatform() === 'android') {
+      try {
+        await FilePlugin.saveFile({ filename, content: json });
+        return filename;
+      } catch (err) {
+        if ((err.message ?? '').includes('cancelled')) return null;
+        throw err;
+      }
+    }
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
     return filename;
   },
 
-  importFromFile: async () => {
-    const perm = await Filesystem.requestPermissions();
-    if (perm.publicStorage !== 'granted') {
-      throw new Error('저장소 권한이 없습니다.\nAndroid 11 이상은 설정 → 앱 → 차필 → 권한 → 파일 및 미디어 → 모든 파일 관리 허용 후 다시 시도해 주세요.');
-    }
-    const dir = Capacitor.getPlatform() === 'ios'
-      ? Directory.Documents
-      : Directory.ExternalStorage;
-    const { files } = await Filesystem.readdir({ path: 'backups', directory: dir });
-    const backups = files
-      .filter(f => f.name.startsWith('chapil_backup_') && f.name.endsWith('.json'))
-      .sort((a, b) => b.name.localeCompare(a.name));
-    if (backups.length === 0) throw new Error('backups 폴더에 백업 파일이 없습니다');
-    const result = await Filesystem.readFile({
-      path: `backups/${backups[0].name}`,
-      directory: dir,
-      encoding: Encoding.UTF8,
-    });
-    const data = JSON.parse(typeof result.data === 'string' ? result.data : await result.data.text());
-    return api.importPreview(data);
+  // Android 전용 (MediaStore). iOS 빌드 시 호출하지 말 것
+  autoBackupToFile: async () => {
+    const data = await api.exportData();
+    const json = JSON.stringify(data, null, 2);
+    const date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+    const filename = `chapil_backup_${date}.json`;
+    await FilePlugin.autoBackup({ filename, content: json });
+    return filename;
   },
+
+  importFromFile: (file) => new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const data = JSON.parse(e.target.result);
+        resolve(api.importPreview(data));
+      } catch {
+        reject(new Error('올바른 JSON 파일이 아닙니다'));
+      }
+    };
+    reader.onerror = () => reject(new Error('파일 읽기 실패'));
+    reader.readAsText(file, 'utf-8');
+  }),
 
   // ── 차량 이미지 ──────────────────────────────────────────────────────
   uploadCarImage: async (file) => {

@@ -4,6 +4,7 @@ import './index.css'
 import App from './App.jsx'
 import { initDB } from './db.js'
 import { initImages } from './api.js'
+import './logger.js'
 
 initDB().then(() => initImages()).then(() => {
   createRoot(document.getElementById('root')).render(
