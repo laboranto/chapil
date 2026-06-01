@@ -890,6 +890,17 @@ def seed_demo():
 
 
 # 내보내기
+@app.get("/api/demo-seed")
+def get_demo_seed():
+    if os.environ.get("DEMO_MODE", "").lower() != "true":
+        raise HTTPException(status_code=404)
+    seed_path = BASE_DIR / "seed_demo.json"
+    if not seed_path.exists():
+        raise HTTPException(status_code=404)
+    with open(seed_path, encoding="utf-8") as f:
+        return json.load(f)
+
+
 @app.get("/api/export")
 def export_data():
     """현재 DB 전체를 차필 가져오기 형식과 동일한 JSON으로 내보낸다."""
