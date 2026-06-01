@@ -2,6 +2,7 @@ from fastapi import FastAPI, HTTPException, UploadFile, File
 from PIL import Image, ImageOps
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.base import BaseHTTPMiddleware
 from fastapi.responses import FileResponse, Response
 from contextlib import asynccontextmanager
 from pydantic import BaseModel, field_validator
@@ -105,6 +106,17 @@ app = FastAPI(title="차계부", lifespan=lifespan)
 # 정적 파일 서빙 — Docker 빌드 시에만 static/ 폴더가 존재한다.
 if STATIC_DIR.exists():
     app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+
+# COOP/COEP 미들웨어: sqlite-wasm의 OPFS VFS가 SharedArrayBuffer를 필요로 하므로
+# 모든 응답에 이 두 헤더를 추가해야 한다. 없으면 :memory: 폴백으로 떨어져 데이터가 유지되지 않는다.
+class CoopCoepMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request, call_next):
+        response = await call_next(request)
+        response.headers["Cross-Origin-Opener-Policy"] = "same-origin"
+        response.headers["Cross-Origin-Embedder-Policy"] = "require-corp"
+        return response
+
+app.add_middleware(CoopCoepMiddleware)
 
 # CORS 미들웨어: React SPA가 다른 포트(예: localhost:3000)에서 이 API를 호출할 수 있도록 허용.
 # 배포 시에는 allow_origins를 실제 도메인으로 제한할 것.

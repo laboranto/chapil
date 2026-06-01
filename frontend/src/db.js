@@ -67,8 +67,8 @@ export async function initDB() {
   try {
     const res = await promiser('open', { filename: 'file:carlog.sqlite3?vfs=opfs' });
     dbId = res.dbId;
-  } catch {
-    // OPFS 미지원 환경 fallback (개발/웹 테스트용)
+  } catch (e) {
+    console.warn('OPFS 초기화 실패, 인메모리 DB로 폴백합니다 (데이터가 유지되지 않음):', e);
     const res = await promiser('open', { filename: ':memory:' });
     dbId = res.dbId;
   }
