@@ -18,6 +18,18 @@ export default function Onboarding() {
   const navigate = useNavigate()
   const storage = getStorageMode()
 
+  let lsFirstSeen = null
+  let lsError = null
+  try {
+    lsFirstSeen = localStorage.getItem('chapil-first-seen')
+    if (!lsFirstSeen) {
+      lsFirstSeen = new Date().toISOString()
+      localStorage.setItem('chapil-first-seen', lsFirstSeen)
+    }
+  } catch (e) {
+    lsError = e?.message ?? String(e)
+  }
+
   useEffect(() => {
     const car = carRef.current
     const check = checkRef.current
@@ -161,6 +173,8 @@ export default function Onboarding() {
         <div>
           FSH:{String(!!self.FileSystemHandle)} DH:{String(!!self.FileSystemDirectoryHandle)} FH:{String(!!self.FileSystemFileHandle)} SAH:{String(!!self.FileSystemFileHandle?.prototype?.createSyncAccessHandle)} gD:{String(!!navigator?.storage?.getDirectory)}
         </div>
+        <div>ls: {lsError ? `err ${lsError}` : (lsFirstSeen ?? 'null')}</div>
+        <div style={{ wordBreak: 'break-all' }}>ua: {navigator.userAgent}</div>
         {storage.reason ? <div>err: {storage.reason}</div> : null}
       </div>
     </div>
