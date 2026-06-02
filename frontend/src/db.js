@@ -1,7 +1,6 @@
-import { sqlite3Worker1Promiser } from '@sqlite.org/sqlite-wasm';
+import sqlite3InitModule from '@sqlite.org/sqlite-wasm';
 
-let promiser = null;
-let dbId = null;
+let oo1Db = null;
 let storageMode = 'unknown';
 let storageFallbackReason = null;
 
@@ -63,59 +62,56 @@ const SCHEMA = `
 `;
 
 export async function initDB() {
-  promiser = await new Promise((resolve, reject) => {
-    const p = sqlite3Worker1Promiser({
-      onready: () => resolve(p),
-      onerror: (e) => reject(new Error(e.result?.message ?? 'SQLite worker 초기화 실패')),
-    });
+  const sqlite3 = await sqlite3InitModule({
+    print: console.log,
+    printErr: console.error,
   });
 
+  // SharedArrayBuffer가 비활성인 환경(iOS standalone PWA 등)에서도 동작하는 SAH-Pool VFS를 사용한다.
+  // 표준 OPFS VFS는 worker1이 SAB 필요로 install 단계를 스킵해 "no such vfs: opfs" 에러로 떨어진다.
   try {
-    const res = await promiser('open', { filename: 'file:carlog.sqlite3?vfs=opfs' });
-    dbId = res.dbId;
-    storageMode = 'opfs';
+    const poolUtil = await sqlite3.installOpfsSAHPoolVfs({
+      name: 'opfs-sahpool',
+      initialCapacity: 6,
+    });
+    oo1Db = new poolUtil.OpfsSAHPoolDb('/carlog.sqlite3');
+    storageMode = 'opfs-sahpool';
   } catch (e) {
-    storageFallbackReason = e?.result?.message ?? e?.message ?? String(e);
-    console.error(new Error(`OPFS 초기화 실패, 인메모리 DB로 폴백: ${storageFallbackReason}`));
-    const res = await promiser('open', { filename: ':memory:' });
-    dbId = res.dbId;
+    storageFallbackReason = e?.message ?? String(e);
+    console.error(new Error(`OPFS-SAHPool 초기화 실패, 인메모리 DB로 폴백: ${storageFallbackReason}`));
+    oo1Db = new sqlite3.oo1.DB(':memory:');
     storageMode = 'memory';
   }
 
-  await promiser('exec', { dbId, sql: SCHEMA });
+  oo1Db.exec(SCHEMA);
 }
 
 export function getDB() {
-  if (!promiser || dbId == null) throw new Error('DB가 초기화되지 않았습니다. initDB()를 먼저 호출하세요.');
+  if (!oo1Db) throw new Error('DB가 초기화되지 않았습니다. initDB()를 먼저 호출하세요.');
 
   return {
     query: async (sql, params = []) => {
-      const res = await promiser('exec', {
-        dbId, sql,
+      const values = oo1Db.exec({
+        sql,
         bind: params.length > 0 ? params : undefined,
         rowMode: 'object',
         returnValue: 'resultRows',
       });
-      return { values: res.result.resultRows ?? [] };
+      return { values };
     },
 
     run: async (sql, params = []) => {
-      await promiser('exec', {
-        dbId, sql,
+      oo1Db.exec({
+        sql,
         bind: params.length > 0 ? params : undefined,
       });
-      const meta = await promiser('exec', {
-        dbId,
-        sql: 'SELECT last_insert_rowid() AS lastId',
-        rowMode: 'object',
-        returnValue: 'resultRows',
-      });
-      return { changes: { lastId: meta.result.resultRows[0]?.lastId ?? null } };
+      const lastId = oo1Db.selectValue('SELECT last_insert_rowid()') ?? null;
+      return { changes: { lastId } };
     },
 
-    execute: async (sql) => promiser('exec', { dbId, sql }),
-    beginTransaction:    async () => promiser('exec', { dbId, sql: 'BEGIN' }),
-    commitTransaction:   async () => promiser('exec', { dbId, sql: 'COMMIT' }),
-    rollbackTransaction: async () => promiser('exec', { dbId, sql: 'ROLLBACK' }),
+    execute: async (sql) => { oo1Db.exec(sql); },
+    beginTransaction:    async () => { oo1Db.exec('BEGIN'); },
+    commitTransaction:   async () => { oo1Db.exec('COMMIT'); },
+    rollbackTransaction: async () => { oo1Db.exec('ROLLBACK'); },
   };
 }

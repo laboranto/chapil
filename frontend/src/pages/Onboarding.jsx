@@ -152,10 +152,10 @@ export default function Onboarding() {
           opacity: 0.55,
           fontFamily: 'monospace',
           pointerEvents: 'none',
-          color: storage.mode === 'opfs' ? '#0a0' : '#c00',
+          color: storage.mode.startsWith('opfs') ? '#0a0' : '#c00',
         }}
       >
-        storage: {storage.mode}
+        storage: {storage.mode} / coi: {String(navigator.crossOriginIsolated)}
         {storage.reason ? ` — ${storage.reason}` : ''}
       </div>
     </div>
