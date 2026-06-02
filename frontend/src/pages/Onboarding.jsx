@@ -164,7 +164,7 @@ export default function Onboarding() {
           opacity: 0.6,
           fontFamily: 'monospace',
           pointerEvents: 'none',
-          color: storage.mode.startsWith('opfs') ? '#0a0' : '#c00',
+          color: (storage.mode === 'memory' || storage.mode === 'unknown') ? '#c00' : '#0a0',
           padding: '0 8px',
           lineHeight: 1.3,
         }}

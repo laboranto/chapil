@@ -67,18 +67,14 @@ export async function initDB() {
     printErr: console.error,
   });
 
-  // SharedArrayBuffer가 비활성인 환경(iOS standalone PWA 등)에서도 동작하는 SAH-Pool VFS를 사용한다.
-  // 표준 OPFS VFS는 worker1이 SAB 필요로 install 단계를 스킵해 "no such vfs: opfs" 에러로 떨어진다.
+  // iOS standalone PWA는 OPFS API를 통째로 차단하므로 localStorage 기반 kvvfs를 사용한다.
+  // 한도는 5MB. 차계부 규모의 데이터는 충분히 들어가지만, 향후 데이터가 커지면 storageSize() 감시 필요.
   try {
-    const poolUtil = await sqlite3.installOpfsSAHPoolVfs({
-      name: 'opfs-sahpool',
-      initialCapacity: 6,
-    });
-    oo1Db = new poolUtil.OpfsSAHPoolDb('/carlog.sqlite3');
-    storageMode = 'opfs-sahpool';
+    oo1Db = new sqlite3.oo1.JsStorageDb('local');
+    storageMode = 'kvvfs-local';
   } catch (e) {
     storageFallbackReason = e?.message ?? String(e);
-    console.error(new Error(`OPFS-SAHPool 초기화 실패, 인메모리 DB로 폴백: ${storageFallbackReason}`));
+    console.error(new Error(`kvvfs(local) 초기화 실패, 인메모리 DB로 폴백: ${storageFallbackReason}`));
     oo1Db = new sqlite3.oo1.DB(':memory:');
     storageMode = 'memory';
   }
