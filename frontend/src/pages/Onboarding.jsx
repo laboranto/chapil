@@ -148,15 +148,20 @@ export default function Onboarding() {
           right: 0,
           bottom: 'calc(env(safe-area-inset-bottom, 0px) + 4px)',
           textAlign: 'center',
-          fontSize: 10,
-          opacity: 0.55,
+          fontSize: 9,
+          opacity: 0.6,
           fontFamily: 'monospace',
           pointerEvents: 'none',
           color: storage.mode.startsWith('opfs') ? '#0a0' : '#c00',
+          padding: '0 8px',
+          lineHeight: 1.3,
         }}
       >
-        storage: {storage.mode} / coi: {String(navigator.crossOriginIsolated)}
-        {storage.reason ? ` — ${storage.reason}` : ''}
+        <div>storage: {storage.mode} / coi: {String(self.crossOriginIsolated)}</div>
+        <div>
+          FSH:{String(!!self.FileSystemHandle)} DH:{String(!!self.FileSystemDirectoryHandle)} FH:{String(!!self.FileSystemFileHandle)} SAH:{String(!!self.FileSystemFileHandle?.prototype?.createSyncAccessHandle)} gD:{String(!!navigator?.storage?.getDirectory)}
+        </div>
+        {storage.reason ? <div>err: {storage.reason}</div> : null}
       </div>
     </div>
   )
