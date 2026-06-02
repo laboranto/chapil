@@ -1,5 +1,6 @@
 import { useRef, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { getStorageMode } from '../db'
 
 const FEATURES = [
   '불필요한 요소는 덜어냈어요.\n오직 차량 관리에만 집중하세요!',
@@ -15,6 +16,7 @@ export default function Onboarding() {
   const [textVisible, setTextVisible] = useState(false)
   const [sliding, setSliding] = useState(false)
   const navigate = useNavigate()
+  const storage = getStorageMode()
 
   useEffect(() => {
     const car = carRef.current
@@ -138,6 +140,23 @@ export default function Onboarding() {
             </button>
           : <span />
         }
+      </div>
+      <div
+        style={{
+          position: 'fixed',
+          left: 0,
+          right: 0,
+          bottom: 'calc(env(safe-area-inset-bottom, 0px) + 4px)',
+          textAlign: 'center',
+          fontSize: 10,
+          opacity: 0.55,
+          fontFamily: 'monospace',
+          pointerEvents: 'none',
+          color: storage.mode === 'opfs' ? '#0a0' : '#c00',
+        }}
+      >
+        storage: {storage.mode}
+        {storage.reason ? ` — ${storage.reason}` : ''}
       </div>
     </div>
   )

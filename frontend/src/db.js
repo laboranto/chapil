@@ -2,6 +2,12 @@ import { sqlite3Worker1Promiser } from '@sqlite.org/sqlite-wasm';
 
 let promiser = null;
 let dbId = null;
+let storageMode = 'unknown';
+let storageFallbackReason = null;
+
+export function getStorageMode() {
+  return { mode: storageMode, reason: storageFallbackReason };
+}
 
 const SCHEMA = `
   CREATE TABLE IF NOT EXISTS fuel (
@@ -67,10 +73,13 @@ export async function initDB() {
   try {
     const res = await promiser('open', { filename: 'file:carlog.sqlite3?vfs=opfs' });
     dbId = res.dbId;
+    storageMode = 'opfs';
   } catch (e) {
-    console.warn('OPFS 초기화 실패, 인메모리 DB로 폴백합니다 (데이터가 유지되지 않음):', e);
+    storageFallbackReason = e?.result?.message ?? e?.message ?? String(e);
+    console.error(new Error(`OPFS 초기화 실패, 인메모리 DB로 폴백: ${storageFallbackReason}`));
     const res = await promiser('open', { filename: ':memory:' });
     dbId = res.dbId;
+    storageMode = 'memory';
   }
 
   await promiser('exec', { dbId, sql: SCHEMA });
