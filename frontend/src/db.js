@@ -1,12 +1,6 @@
 import sqlite3InitModule from '@sqlite.org/sqlite-wasm';
 
 let oo1Db = null;
-let storageMode = 'unknown';
-let storageFallbackReason = null;
-
-export function getStorageMode() {
-  return { mode: storageMode, reason: storageFallbackReason };
-}
 
 const SCHEMA = `
   CREATE TABLE IF NOT EXISTS fuel (
@@ -67,16 +61,12 @@ export async function initDB() {
     printErr: console.error,
   });
 
-  // iOS standalone PWA는 OPFS API를 통째로 차단하므로 localStorage 기반 kvvfs를 사용한다.
-  // 한도는 5MB. 차계부 규모의 데이터는 충분히 들어가지만, 향후 데이터가 커지면 storageSize() 감시 필요.
+  // iOS standalone PWA는 OPFS API를 통째로 차단하므로 localStorage 기반 kvvfs를 사용한다. 한도 5MB.
   try {
     oo1Db = new sqlite3.oo1.JsStorageDb('local');
-    storageMode = 'kvvfs-local';
   } catch (e) {
-    storageFallbackReason = e?.message ?? String(e);
-    console.error(new Error(`kvvfs(local) 초기화 실패, 인메모리 DB로 폴백: ${storageFallbackReason}`));
+    console.warn('kvvfs(local) 초기화 실패, 인메모리 DB로 폴백 (데이터가 유지되지 않음):', e);
     oo1Db = new sqlite3.oo1.DB(':memory:');
-    storageMode = 'memory';
   }
 
   oo1Db.exec(SCHEMA);

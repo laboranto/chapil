@@ -1,6 +1,5 @@
 import { useRef, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getStorageMode } from '../db'
 
 const FEATURES = [
   '불필요한 요소는 덜어냈어요.\n오직 차량 관리에만 집중하세요!',
@@ -16,19 +15,6 @@ export default function Onboarding() {
   const [textVisible, setTextVisible] = useState(false)
   const [sliding, setSliding] = useState(false)
   const navigate = useNavigate()
-  const storage = getStorageMode()
-
-  let lsFirstSeen = null
-  let lsError = null
-  try {
-    lsFirstSeen = localStorage.getItem('chapil-first-seen')
-    if (!lsFirstSeen) {
-      lsFirstSeen = new Date().toISOString()
-      localStorage.setItem('chapil-first-seen', lsFirstSeen)
-    }
-  } catch (e) {
-    lsError = e?.message ?? String(e)
-  }
 
   useEffect(() => {
     const car = carRef.current
@@ -152,30 +138,6 @@ export default function Onboarding() {
             </button>
           : <span />
         }
-      </div>
-      <div
-        style={{
-          position: 'fixed',
-          left: 0,
-          right: 0,
-          bottom: 'calc(env(safe-area-inset-bottom, 0px) + 4px)',
-          textAlign: 'center',
-          fontSize: 9,
-          opacity: 0.6,
-          fontFamily: 'monospace',
-          pointerEvents: 'none',
-          color: (storage.mode === 'memory' || storage.mode === 'unknown') ? '#c00' : '#0a0',
-          padding: '0 8px',
-          lineHeight: 1.3,
-        }}
-      >
-        <div>storage: {storage.mode} / coi: {String(self.crossOriginIsolated)}</div>
-        <div>
-          FSH:{String(!!self.FileSystemHandle)} DH:{String(!!self.FileSystemDirectoryHandle)} FH:{String(!!self.FileSystemFileHandle)} SAH:{String(!!self.FileSystemFileHandle?.prototype?.createSyncAccessHandle)} gD:{String(!!navigator?.storage?.getDirectory)}
-        </div>
-        <div>ls: {lsError ? `err ${lsError}` : (lsFirstSeen ?? 'null')}</div>
-        <div style={{ wordBreak: 'break-all' }}>ua: {navigator.userAgent}</div>
-        {storage.reason ? <div>err: {storage.reason}</div> : null}
       </div>
     </div>
   )
