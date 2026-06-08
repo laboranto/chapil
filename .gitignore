@@ -10,3 +10,5 @@ ios/App/Pods/
 ios/App/build/
 fix_alpha*.py
 android/bugreport*.zip
+*.jks
+*.keystore
