@@ -1147,7 +1147,10 @@ if DIST_DIR.exists():
     def serve_spa(full_path: str):
         target = DIST_DIR / full_path
         if target.exists() and target.is_file():
-            return FileResponse(target)
+            return FileResponse(
+                target,
+                headers={"Cache-Control": "public, max-age=31536000, immutable"},
+            )
         return FileResponse(
             DIST_DIR / "index.html",
             headers={"Cache-Control": "no-cache, no-store, must-revalidate"},
