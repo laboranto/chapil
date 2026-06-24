@@ -510,6 +510,147 @@ export const api = {
     reader.readAsText(file, 'utf-8');
   }),
 
+  importFromXlsx: async (file) => {
+    const XLSX = await import('xlsx');
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+          
+          const fuel_records = [];
+          const maint_records = [];
+          const other_records = [];
+          const errors = [];
+          
+          const _str = (val) => val != null ? String(val).trim() : '';
+          const _toInt = (val) => {
+            if (!val) return null;
+            const str = String(val).replace(/,/g, '');
+            const num = parseInt(parseFloat(str), 10);
+            return isNaN(num) ? null : num;
+          };
+          const _toFloat = (val) => {
+            if (!val) return null;
+            const str = String(val).replace(/,/g, '');
+            const num = parseFloat(str);
+            return isNaN(num) ? null : num;
+          };
+          const _parseDate = (val) => {
+            // Excel dates might be numeric
+            if (typeof val === 'number') {
+              const d = XLSX.SSF.parse_date_code(val);
+              if (d) {
+                const mm = String(d.m).padStart(2, '0');
+                const dd = String(d.d).padStart(2, '0');
+                return `${d.y}-${mm}-${dd}`;
+              }
+            }
+            const str = String(val).trim();
+            if (!str) return '';
+            return str.replace(/\./g, '-');
+          };
+          const _checkDate = (val) => /^\d{4}-\d{2}-\d{2}$/.test(val) && !isNaN(new Date(val).getTime());
+          
+          if (workbook.SheetNames.includes("주유(충전)")) {
+            const sheet = workbook.Sheets["주유(충전)"];
+            const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: null });
+            for (let i = 1; i < rows.length; i++) {
+              const row = rows[i];
+              if (!row || row[0] == null || _str(row[0]) === '') continue;
+              try {
+                const cols = row.map(_str);
+                const raw_date = row[0]; // use original value for date parsing
+                const ftype = cols[1] || "가득주유";
+                const amount = _toInt(cols[2]) || 0;
+                const unit_price = _toInt(cols[3]);
+                const liters = _toFloat(cols[4]);
+                const odometer = _toInt(cols[6]) || 0;
+                const location = cols[7] || null;
+                const memo = cols.length > 10 ? cols[10] : "";
+                
+                const parsed_date = _parseDate(raw_date);
+                if (!_checkDate(parsed_date)) throw new Error(`날짜 형식 오류 (${_str(raw_date)})`);
+                
+                fuel_records.push({
+                  date: parsed_date, type: ftype, amount, unit_price,
+                  liters, odometer, location, memo
+                });
+              } catch (err) {
+                errors.push(`주유 ${i + 1}행: ${err.message || '오류'}`);
+              }
+            }
+          }
+          
+          if (workbook.SheetNames.includes("정비")) {
+            const sheet = workbook.Sheets["정비"];
+            const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: null });
+            for (let i = 1; i < rows.length; i++) {
+              const row = rows[i];
+              if (!row || row[0] == null || _str(row[0]) === '') continue;
+              try {
+                const cols = row.map(_str);
+                const parsed_date = _parseDate(row[0]);
+                if (!_checkDate(parsed_date)) throw new Error(`날짜 형식 오류 (${_str(row[0])})`);
+                
+                const item = cols.length > 2 ? cols[2] : "";
+                const amount = _toInt(cols[3]) || 0;
+                const odometer = _toInt(cols[4]) || 0;
+                const location = cols.length > 5 ? cols[5] : null;
+                const memo = cols.length > 6 ? cols[6] : "";
+                
+                maint_records.push({
+                  date: parsed_date, item, amount, odometer, location, memo
+                });
+              } catch (err) {
+                errors.push(`정비 ${i + 1}행: ${err.message || '오류'}`);
+              }
+            }
+          }
+          
+          if (workbook.SheetNames.includes("기타")) {
+            const sheet = workbook.Sheets["기타"];
+            const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: null });
+            for (let i = 1; i < rows.length; i++) {
+              const row = rows[i];
+              if (!row || row[0] == null || _str(row[0]) === '') continue;
+              try {
+                const cols = row.map(_str);
+                const parsed_date = _parseDate(row[0]);
+                if (!_checkDate(parsed_date)) throw new Error(`날짜 형식 오류 (${_str(row[0])})`);
+                
+                const item = cols.length > 2 ? cols[2] : "";
+                const amount = _toInt(cols[3]) || 0;
+                const odometer = _toInt(cols[4]) || null;
+                const location = cols.length > 5 ? cols[5] : null;
+                const memo = cols.length > 6 ? cols[6] : "";
+                
+                other_records.push({
+                  date: parsed_date, item, amount, odometer, location, memo
+                });
+              } catch (err) {
+                errors.push(`기타 ${i + 1}행: ${err.message || '오류'}`);
+              }
+            }
+          }
+          
+          resolve({
+            counts: { fuel: fuel_records.length, maintenance: maint_records.length, other: other_records.length },
+            records: { fuel: fuel_records, maintenance: maint_records, other: other_records },
+            vehicle: null,
+            errors
+          });
+          
+        } catch (err) {
+          reject(new Error('올바른 엑셀 파일이 아닙니다'));
+        }
+      };
+      reader.onerror = () => reject(new Error('파일 읽기 실패'));
+      reader.readAsArrayBuffer(file);
+    });
+  },
+
   // ── 차량 이미지 ──────────────────────────────────────────────────────
   uploadCarImage: async (file) => {
     const b64 = await fileToBase64(file);

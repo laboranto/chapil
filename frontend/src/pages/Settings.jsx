@@ -101,7 +101,12 @@ export default function Settings() {
     setPreviewData(null)
     setImportDone(null)
     try {
-      const result = await api.importFromFile(file)
+      let result;
+      if (file.name.toLowerCase().endsWith('.xlsx')) {
+        result = await api.importFromXlsx(file)
+      } else {
+        result = await api.importFromFile(file)
+      }
       setPreviewData(result)
     } catch (err) {
       setImportError(`파일 오류: ${err.message}`)
@@ -221,7 +226,7 @@ export default function Settings() {
         <div className="section-header">데이터 관리</div>
         <div className="section-advice">
           <p>차필에서 작성하신 데이터는 사용자의 기기 내부에 저장되며, 어디에도 전송되지 않습니다. 사용자께서 주기적으로 '데이터 내보내기'를 통하여 개인 드라이브, 클라우드 등 안전한 장소에 백업(보관)하실 것을 권장 드립니다.</p>
-          <p>기존에 다른 앱에서 차계부를 작성하고 계셨다면 해당 앱에서 엑셀 파일(xlsx)로 저장한 차계부 데이터를 차필에 변환하는 기능을 지원하고 있습니다. 아래 '데이터 가져오기' 버튼을 누르고 JSON 파일을 선택하면 됩니다.</p>
+          <p>기존에 다른 앱에서 차계부를 작성하고 계셨다면 해당 앱에서 엑셀 파일(xlsx)로 저장한 차계부 데이터를 차필에 변환하는 기능을 지원하고 있습니다. 아래 '데이터 가져오기' 버튼을 누르고 JSON 파일이나 엑셀(xlsx) 파일을 선택하면 됩니다.</p>
 
         </div>
         <div className="set-migrate">
@@ -233,7 +238,7 @@ export default function Settings() {
           </button>
           {exportDone && <p className="import-done-inline">{exportDone} 다운로드 완료</p>}
         </div>
-        <input ref={importFileRef} type="file" accept=".json,application/json" style={{ display: 'none' }} onChange={handleFileChange} />
+        <input ref={importFileRef} type="file" accept=".json,application/json,.xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" style={{ display: 'none' }} onChange={handleFileChange} />
 
         {importError && <p className="import-error">{importError}</p>}
 

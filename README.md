@@ -16,7 +16,7 @@
 - Infra: Docker, Docker Compose, Tailscale VPN, Codemagic CI/CD
 - License: LGPL
 
-## 디렉토리 구조
+## 디렉터리 구조
 ```
 chapil/
 ├── app/                      # Python 백엔드 (FastAPI)
