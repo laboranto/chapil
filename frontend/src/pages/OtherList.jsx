@@ -1,22 +1,18 @@
-import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../api'
 import MoreMenu from '../components/MoreMenu'
+import { usePaginatedList } from '../hooks/usePaginatedList'
 
 const fmt = (n) => Number(n).toLocaleString('ko-KR')
 
 export default function OtherList() {
-  const [records, setRecords] = useState([])
   const navigate = useNavigate()
-
-  useEffect(() => {
-    api.getOther().then(setRecords)
-  }, [])
+  const { records, hasMore, sentinelRef, removeRecord } = usePaginatedList(api.getOtherPage)
 
   const handleDelete = async (id) => {
     if (!window.confirm('삭제할까요?')) return
     await api.deleteOther(id)
-    setRecords(prev => prev.filter(r => r.id !== id))
+    removeRecord(id)
   }
 
   return (
@@ -25,7 +21,7 @@ export default function OtherList() {
       <div className="topbg"></div>
       <button className="btn-add" onClick={() => navigate('/other/new')}>+</button>
       <div className="content">
-        {records.length === 0
+        {records.length === 0 && !hasMore
           ? <div className="empty">기타 지출 기록이 없어요</div>
           : records.map(r => (
             <div className="card" key={r.id}>
@@ -48,6 +44,7 @@ export default function OtherList() {
             </div>
           ))
         }
+        {hasMore && <div ref={sentinelRef} style={{ height: 1 }} />}
       </div>
     </>
   )

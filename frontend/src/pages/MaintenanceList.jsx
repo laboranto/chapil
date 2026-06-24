@@ -1,22 +1,18 @@
-import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../api'
 import MoreMenu from '../components/MoreMenu'
+import { usePaginatedList } from '../hooks/usePaginatedList'
 
 const fmt = (n) => Number(n).toLocaleString('ko-KR')
 
 export default function MaintenanceList() {
-  const [records, setRecords] = useState([])
   const navigate = useNavigate()
-
-  useEffect(() => {
-    api.getMaintenance().then(setRecords)
-  }, [])
+  const { records, hasMore, sentinelRef, removeRecord } = usePaginatedList(api.getMaintenancePage)
 
   const handleDelete = async (id) => {
     if (!window.confirm('삭제할까요?')) return
     await api.deleteMaintenance(id)
-    setRecords(prev => prev.filter(r => r.id !== id))
+    removeRecord(id)
   }
 
   return (
@@ -25,7 +21,7 @@ export default function MaintenanceList() {
       <div className="topbg"></div>
       <button className="btn-add" onClick={() => navigate('/maintenance/new')}>+</button>
       <div className="content">
-        {records.length === 0
+        {records.length === 0 && !hasMore
           ? <div className="empty">정비 기록이 없어요</div>
           : records.map(r => (
             <div className="card" key={r.id}>
@@ -46,6 +42,7 @@ export default function MaintenanceList() {
             </div>
           ))
         }
+        {hasMore && <div ref={sentinelRef} style={{ height: 1 }} />}
       </div>
     </>
   )
