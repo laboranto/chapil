@@ -1,26 +1,21 @@
-import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../api'
 import MoreMenu from '../components/MoreMenu'
 import { useSettings } from '../context/SettingsContext'
+import { usePaginatedList } from '../hooks/usePaginatedList'
 
 const fmt = (n) => Number(n).toLocaleString('ko-KR')
 
 export default function FuelList() {
-  const [records, setRecords] = useState([])
   const navigate = useNavigate()
   const { options, settings } = useSettings()
   const economyUnit = options.car_fuel.find(o => o.code === settings.car_fuel)?.economy_unit ?? 'km/L'
-
-  useEffect(() => {
-    api.getFuel().then(setRecords)
-  }, [])
+  const { records, hasMore, sentinelRef, removeRecord } = usePaginatedList(api.getFuelPage)
 
   const handleDelete = async (id) => {
     if (!window.confirm('삭제할까요?')) return
     await api.deleteFuel(id)
-    // 삭제된 항목을 제외하고 상태를 갱신한다. (API 재호출 없이)
-    setRecords(prev => prev.filter(r => r.id !== id))
+    removeRecord(id)
   }
 
   return (
@@ -29,7 +24,7 @@ export default function FuelList() {
       <div className="topbg"></div>
       <button className="btn-add" onClick={() => navigate('/fuel/new')}>+</button>
       <div className="content">
-        {records.length === 0
+        {records.length === 0 && !hasMore
           ? <div className="empty">주유 기록이 없어요</div>
           : records.map(r => {
             const badOdometer = !r.odometer || r.odometer <= 0
@@ -64,6 +59,7 @@ export default function FuelList() {
             </div>
           )})
         }
+        {hasMore && <div ref={sentinelRef} style={{ height: 1 }} />}
       </div>
     </>
   )
