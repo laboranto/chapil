@@ -1,4 +1,5 @@
 import { getDB } from './db.js';
+import { buildKeysetQuery, nextCursorFrom, PAGE_SIZE } from './pagination';
 import { Capacitor, registerPlugin } from '@capacitor/core';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 
@@ -247,6 +248,29 @@ export const api = {
     const db = getDB();
     await db.run("DELETE FROM fuel WHERE id=?", [id]);
     return null;
+  },
+
+  // ── 목록 페이지네이션 (keyset) ─────────────────────────────────────
+  // 기존 getFuel/getMaintenance/getOther 전체조회는 그대로 둔다(폼 계산·통계용).
+  getFuelPage: async ({ cursor = null, limit = PAGE_SIZE } = {}) => {
+    const db = getDB()
+    const { sql, params } = buildKeysetQuery('fuel', cursor, limit)
+    const rs = rows(await db.query(sql, params))
+    return { rows: rs, nextCursor: nextCursorFrom(rs, limit) }
+  },
+
+  getMaintenancePage: async ({ cursor = null, limit = PAGE_SIZE } = {}) => {
+    const db = getDB()
+    const { sql, params } = buildKeysetQuery('maintenance', cursor, limit)
+    const rs = rows(await db.query(sql, params))
+    return { rows: rs, nextCursor: nextCursorFrom(rs, limit) }
+  },
+
+  getOtherPage: async ({ cursor = null, limit = PAGE_SIZE } = {}) => {
+    const db = getDB()
+    const { sql, params } = buildKeysetQuery('other', cursor, limit)
+    const rs = rows(await db.query(sql, params))
+    return { rows: rs, nextCursor: nextCursorFrom(rs, limit) }
   },
 
   // ── 정비 ────────────────────────────────────────────────────────────
