@@ -6,8 +6,11 @@ backups/
 .venv/
 .old/
 android/app/build/
+android/.kotlin/
+android/app/src/main/assets/
 ios/App/Pods/
 ios/App/build/
+.superpowers/
 fix_alpha*.py
 android/bugreport*.zip
 *.jks
