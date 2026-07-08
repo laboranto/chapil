@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { VERSION } from '../version.js'
 import { api } from '../api'
 import { NavLink } from 'react-router-dom'
 import { useSettings } from '../context/SettingsContext'
@@ -330,7 +331,7 @@ const { fuelTerm } = useSettings()
 
       <div className="section-footer">
         오늘도 안전운전 하세요
-        <p>차필(chapil) 2026 | v26.6.1b</p>
+        <p>차필(chapil) 2026 | {VERSION}</p>
       </div>
 
       </div>
