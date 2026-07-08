@@ -33,6 +33,10 @@ chapil/
 │   │   ├── api.js            # 백엔드 API 호출
 │   │   └── index.css         # 전역 스타일
 │   └── public/               # PWA manifest, 아이콘
+├── docs/
+│   └── tokens/               # 디자인 토큰 인터랙티브 참조 페이지
+│       ├── index.html
+│       └── index.css
 ├── android/                  # Capacitor Android 프로젝트
 ├── ios/                      # Capacitor iOS 프로젝트
 ├── assets/                   # 앱 아이콘 및 스플래시 이미지 원본
@@ -81,6 +85,9 @@ docker compose up -d --build
 - `/backups` 경로 안에 .json 형식의 백업 파일이 자동으로 저장됩니다. 이는 앱 실행마다 진행되며, 24시간 이내에 최대 1회까지 진행됩니다. 최대 30개까지 저장되며, 이를 넘어가면 오래된 파일 순서대로 자동 삭제됩니다.
 
 # 업데이트 기록
+### v26.7.8b
+- CSS 디자인 토큰 체계를 시맨틱 네이밍으로 전면 재편하였습니다. (`--bg` → `--surface`, `--primary` → `--accent`, `--text` → `--on-surface` 등 20여 개)
+- 디자인 토큰 인터랙티브 참조 페이지(`docs/tokens/`)를 추가하였습니다. 각 토큰의 라이트/다크 값, 실제 컴포넌트 예시, Do/Don't 가이드를 확인할 수 있습니다.
 ### v26.6.1b
 - 일부 버그가 수정되었습니다
 ### v26.5.22b
