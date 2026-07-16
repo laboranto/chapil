@@ -5,6 +5,8 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from fastapi.responses import FileResponse
 from contextlib import asynccontextmanager
 from pathlib import Path
+from typing import Optional
+from pydantic import BaseModel
 import json
 import os
 from database import get_db, init_db
@@ -63,6 +65,54 @@ def get_demo_seed():
         raise HTTPException(status_code=404)
     with open(seed_path, encoding="utf-8") as f:
         return json.load(f)
+
+
+class RecoveryBody(BaseModel):
+    ciphertext: str
+    retention_months: Optional[int] = None
+
+
+# ── 복구코드 백업 ─────────────────────────────────────────────────────
+# lookup_key는 클라이언트가 코드로부터 SHA-256으로 파생시킨 값이다.
+# 서버는 이 값과 암호문만 가지고 있으며, 원본 코드나 복호화 키를 알 수 없다.
+@app.put("/api/recovery/{lookup_key}")
+def recovery_put(lookup_key: str, body: RecoveryBody):
+    conn = get_db()
+    conn.execute(
+        "INSERT OR REPLACE INTO recovery_backups (lookup_key, ciphertext, retention_months, updated_at)"
+        " VALUES (?, ?, ?, datetime('now', 'localtime'))",
+        (lookup_key, body.ciphertext, body.retention_months),
+    )
+    # 보존 기간이 지난 백업을 이 기회에 함께 정리한다 (별도 스케줄러 없음)
+    conn.execute(
+        "DELETE FROM recovery_backups"
+        " WHERE retention_months IS NOT NULL"
+        " AND updated_at < datetime('now', '-' || retention_months || ' months')"
+    )
+    conn.commit()
+    conn.close()
+    return {"ok": True}
+
+
+@app.get("/api/recovery/{lookup_key}")
+def recovery_get(lookup_key: str):
+    conn = get_db()
+    row = conn.execute(
+        "SELECT ciphertext, updated_at FROM recovery_backups WHERE lookup_key=?",
+        (lookup_key,),
+    ).fetchone()
+    conn.close()
+    if not row:
+        raise HTTPException(status_code=404, detail="해당 코드로 저장된 백업이 없습니다.")
+    return dict(row)
+
+
+@app.delete("/api/recovery/{lookup_key}", status_code=204)
+def recovery_delete(lookup_key: str):
+    conn = get_db()
+    conn.execute("DELETE FROM recovery_backups WHERE lookup_key=?", (lookup_key,))
+    conn.commit()
+    conn.close()
 
 
 # ── React SPA 서빙 ────────────────────────────────────────────────────
