@@ -4,6 +4,7 @@ import './index.css'
 import App from './App.jsx'
 import { initDB, getDB } from './db.js'
 import { initImages, api } from './api.js'
+import { maybeAutoBackup } from './recovery.js'
 import './logger.js'
 
 async function maybeSeedDemo() {
@@ -22,6 +23,7 @@ initDB().then(() => maybeSeedDemo()).then(() => initImages()).then(() => {
       <App />
     </StrictMode>,
   )
+  maybeAutoBackup()
 }).catch(err => {
   console.error('DB 초기화 실패:', err)
   document.getElementById('root').innerHTML =
