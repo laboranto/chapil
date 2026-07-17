@@ -264,6 +264,31 @@ li{
 }
 .car-modal-btns button:hover { box-shadow: none; background: var(--state-active); }
 .car-modal-btns button:first-child { color: var(--color-danger); }
+
+/* 복구코드 고지 모달 */
+.recovery-modal-overlay {
+  position: fixed; inset: 0; z-index: 500;
+  background: rgba(0,0,0,0.5);
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+}
+.recovery-modal {
+  background: var(--surface-elevated);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow);
+  backdrop-filter: var(--blur);
+  padding: 20px;
+  max-width: 420px;
+  display: flex; flex-direction: column; gap: 12px;
+}
+.recovery-code-box {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 12px; margin: 4px 0;
+  background: var(--surface-variant); border-radius: var(--radius-sm);
+}
+.recovery-code-box code {
+  flex: 1; font-size: 12px; word-break: break-all; user-select: all;
+}
 /** 상단 헤더 밑바탕(시각 효과용) **/
 .topbg {
   position: fixed; display: flex; z-index: 99;

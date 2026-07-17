@@ -1,6 +1,9 @@
+import { useState } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { SettingsProvider } from './context/SettingsContext'
 import { useSettings } from './context/SettingsContext'
+import { hasAcknowledgedNotice } from './recovery'
+import RecoveryCodeModal from './components/RecoveryCodeModal'
 import BottomNav from './components/BottomNav'
 import Onboarding from './pages/Onboarding'
 import Home from './pages/Home'
@@ -17,6 +20,7 @@ import Feedback from './pages/Feedback'
 function AppContent() {
   const { settings, isReady } = useSettings()
   const location = useLocation()
+  const [showRecoveryModal, setShowRecoveryModal] = useState(() => !hasAcknowledgedNotice())
 
   if (!isReady) return null
 
@@ -31,6 +35,7 @@ function AppContent() {
 
   return (
     <>
+      {showRecoveryModal && <RecoveryCodeModal onClose={() => setShowRecoveryModal(false)} />}
       <Routes>
         <Route path="/onboarding"              element={<Onboarding />} />
         <Route path="/"                        element={<Home />} />
