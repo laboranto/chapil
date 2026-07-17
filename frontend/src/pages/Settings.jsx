@@ -188,11 +188,17 @@ export default function Settings() {
     if (!restoreCodeInput.trim()) return
     setRestoring(true)
     setImportError('')
+    setPreviewData(null)
+    setImportDone(null)
     try {
       const data = await restoreFromCode(restoreCodeInput.trim())
       setPreviewData(api.importPreview(data))
+      setRecoveryMsg('복원할 데이터를 확인했습니다. 위쪽 미리보기에서 확인 후 "가져오기 확정"을 눌러주세요.')
+      setRestoreCodeInput('')
     } catch (err) {
-      setImportError(`복구 실패: ${err.message}`)
+      const msg = `복구 실패: ${err.message}`
+      setImportError(msg)
+      setRecoveryMsg(msg)
     } finally {
       setRestoring(false)
     }
