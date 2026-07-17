@@ -63,6 +63,37 @@ export async function decryptPayload(code, base64) {
   return JSON.parse(new TextDecoder().decode(plainBuf))
 }
 
+// navigator.clipboard(Async Clipboard API)는 secure context(HTTPS/localhost)에서만
+// 존재한다. 이 앱은 Tailscale IP + 평문 HTTP로 접속하는 셀프호스팅 사용을 기본
+// 가이드로 삼고 있어, 그 경우 navigator.clipboard가 undefined라 execCommand로
+// 폴백해야 한다.
+export async function copyToClipboard(text) {
+  const clipboard = globalThis.navigator?.clipboard
+  if (clipboard?.writeText) {
+    try {
+      await clipboard.writeText(text)
+      return true
+    } catch {
+      // 권한 거부 등 — 아래 폴백으로 넘어간다
+    }
+  }
+  const textarea = document.createElement('textarea')
+  textarea.value = text
+  textarea.style.position = 'fixed'
+  textarea.style.opacity = '0'
+  document.body.appendChild(textarea)
+  textarea.focus()
+  textarea.select()
+  let ok = false
+  try {
+    ok = document.execCommand('copy')
+  } catch {
+    ok = false
+  }
+  document.body.removeChild(textarea)
+  return ok
+}
+
 export function getOrCreateCode() {
   let code = localStorage.getItem(CODE_KEY)
   if (!code) {

@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { api } from './api.js'
 import {
   generateCode, encryptPayload, decryptPayload,
@@ -6,6 +6,7 @@ import {
   getRetentionMonths, setRetentionMonths,
   hasAcknowledgedNotice, acknowledgeNotice,
   pushBackup, maybeAutoBackup, restoreFromCode, deleteBackup,
+  copyToClipboard,
 } from './recovery.js'
 
 beforeEach(() => {
@@ -188,5 +189,63 @@ describe('deleteBackup', () => {
   it('이미 삭제된 코드(404)에 대해서도 에러를 던지지 않는다', async () => {
     globalThis.fetch = vi.fn().mockResolvedValue({ ok: false, status: 404 })
     await expect(deleteBackup(generateCode())).resolves.toBeUndefined()
+  })
+})
+
+describe('copyToClipboard', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  function stubDocument(execCommandReturn) {
+    const execCommand = vi.fn().mockReturnValue(execCommandReturn)
+    vi.stubGlobal('document', {
+      createElement: () => ({ value: '', style: {}, focus() {}, select() {} }),
+      body: { appendChild: () => {}, removeChild: () => {} },
+      execCommand,
+    })
+    return execCommand
+  }
+
+  it('navigator.clipboard.writeText가 있으면 그걸 우선 사용한다', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined)
+    vi.stubGlobal('navigator', { clipboard: { writeText } })
+    const execCommand = stubDocument(true)
+
+    const result = await copyToClipboard('hello')
+
+    expect(writeText).toHaveBeenCalledWith('hello')
+    expect(execCommand).not.toHaveBeenCalled()
+    expect(result).toBe(true)
+  })
+
+  it('navigator.clipboard가 없으면(secure context 아님) execCommand로 폴백한다', async () => {
+    vi.stubGlobal('navigator', {})
+    const execCommand = stubDocument(true)
+
+    const result = await copyToClipboard('hello')
+
+    expect(execCommand).toHaveBeenCalledWith('copy')
+    expect(result).toBe(true)
+  })
+
+  it('writeText가 실패해도(권한 거부 등) execCommand로 폴백한다', async () => {
+    const writeText = vi.fn().mockRejectedValue(new Error('denied'))
+    vi.stubGlobal('navigator', { clipboard: { writeText } })
+    const execCommand = stubDocument(true)
+
+    const result = await copyToClipboard('hello')
+
+    expect(execCommand).toHaveBeenCalledWith('copy')
+    expect(result).toBe(true)
+  })
+
+  it('둘 다 실패하면 false를 반환한다', async () => {
+    vi.stubGlobal('navigator', {})
+    stubDocument(false)
+
+    const result = await copyToClipboard('hello')
+
+    expect(result).toBe(false)
   })
 })

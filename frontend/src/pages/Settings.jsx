@@ -7,7 +7,7 @@ import UploadIcon   from '../assets/symbols/upload.svg?react'
 import RecoveryCodeModal from '../components/RecoveryCodeModal'
 import {
   getOrCreateCode, regenerateCode, deleteBackup, restoreFromCode, pushBackup,
-  getRetentionMonths, setRetentionMonths, hasAcknowledgedNotice,
+  getRetentionMonths, setRetentionMonths, hasAcknowledgedNotice, copyToClipboard,
 } from '../recovery'
 
 const VEHICLE_LABELS = {
@@ -163,12 +163,8 @@ export default function Settings() {
   }
 
   const handleCopyCode = async () => {
-    try {
-      await navigator.clipboard.writeText(recoveryCode)
-      setRecoveryMsg('복사되었습니다.')
-    } catch {
-      setRecoveryMsg('복사에 실패했습니다.')
-    }
+    const ok = await copyToClipboard(recoveryCode)
+    setRecoveryMsg(ok ? '복사되었습니다.' : '복사에 실패했습니다.')
   }
 
   const handleRegenerateCode = async () => {

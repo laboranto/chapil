@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { getOrCreateCode, acknowledgeNotice, setRetentionMonths } from '../recovery'
+import { getOrCreateCode, acknowledgeNotice, setRetentionMonths, copyToClipboard } from '../recovery'
 
 export default function RecoveryCodeModal({ onClose }) {
   const [code] = useState(() => getOrCreateCode())
@@ -8,12 +8,7 @@ export default function RecoveryCodeModal({ onClose }) {
   const [revealed, setRevealed] = useState(false)
 
   const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(code)
-      setCopied(true)
-    } catch {
-      setCopied(false)
-    }
+    setCopied(await copyToClipboard(code))
   }
 
   const handleConfirm = () => {
