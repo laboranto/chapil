@@ -288,6 +288,10 @@ li{
 }
 .recovery-code-box code {
   flex: 1; font-size: 12px; word-break: break-all; user-select: all;
+  filter: blur(0); transition: filter 0.15s ease;
+}
+.recovery-code-box code.code-hidden {
+  filter: blur(5px);
 }
 /** 상단 헤더 밑바탕(시각 효과용) **/
 .topbg {

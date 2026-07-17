@@ -49,6 +49,7 @@ export default function Settings() {
   const [restoreCodeInput, setRestoreCodeInput] = useState('')
   const [restoring, setRestoring]       = useState(false)
   const [recoveryMsg, setRecoveryMsg]   = useState('')
+  const [codeRevealed, setCodeRevealed] = useState(false)
 
   useEffect(() => {
     Promise.all([api.getSettings(), api.getSettingsOptions()]).then(
@@ -182,6 +183,7 @@ export default function Settings() {
     }
     const fresh = regenerateCode()
     setRecoveryCode(fresh)
+    setCodeRevealed(false)
     setRecoveryMsg('새 코드가 발급되었습니다. 아래 코드를 다시 저장해 주세요.')
     try {
       await pushBackup()
@@ -371,7 +373,10 @@ export default function Settings() {
           <p>기기 손상 등에 대비해 앱을 실행할 때마다 확인하여 마지막 백업으로부터 24시간이 지났으면 암호화된 데이터가 자동으로 서버에 백업됩니다. 아래 코드가 있어야 복원할 수 있으니 안전한 곳에 보관하세요.</p>
         </div>
         <div className="recovery-code-box">
-          <code>{recoveryCode}</code>
+          <code className={codeRevealed ? '' : 'code-hidden'}>{recoveryCode}</code>
+          <button type="button" className="btn" onClick={() => setCodeRevealed((r) => !r)}>
+            {codeRevealed ? '숨기기' : '보이기'}
+          </button>
           <button type="button" className="btn" onClick={handleCopyCode}>복사</button>
         </div>
         <div className="form-group">

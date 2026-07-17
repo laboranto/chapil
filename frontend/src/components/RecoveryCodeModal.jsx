@@ -5,6 +5,7 @@ export default function RecoveryCodeModal({ onClose }) {
   const [code] = useState(() => getOrCreateCode())
   const [retention, setRetention] = useState('')
   const [copied, setCopied] = useState(false)
+  const [revealed, setRevealed] = useState(false)
 
   const handleCopy = async () => {
     try {
@@ -35,7 +36,10 @@ export default function RecoveryCodeModal({ onClose }) {
           별도로(메모 앱, 다른 기기 등) 보관해야만 나중에 복원이 가능합니다.
         </p>
         <div className="recovery-code-box">
-          <code>{code}</code>
+          <code className={revealed ? '' : 'code-hidden'}>{code}</code>
+          <button type="button" className="btn" onClick={() => setRevealed((r) => !r)}>
+            {revealed ? '숨기기' : '보이기'}
+          </button>
           <button type="button" className="btn" onClick={handleCopy}>
             {copied ? '복사됨' : '복사'}
           </button>
