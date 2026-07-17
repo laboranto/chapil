@@ -4,6 +4,10 @@ import { api } from '../api'
 import { useSettings } from '../context/SettingsContext'
 import DownloadIcon from '../assets/symbols/download.svg?react'
 import UploadIcon   from '../assets/symbols/upload.svg?react'
+import {
+  getOrCreateCode, regenerateCode, deleteBackup, restoreFromCode,
+  getRetentionMonths, setRetentionMonths,
+} from '../recovery'
 
 const VEHICLE_LABELS = {
   car_type: '차종', car_brand: '브랜드', car_model: '차량명',
@@ -39,6 +43,12 @@ export default function Settings() {
   const [importDone, setImportDone]   = useState(null)
   const [exportDone, setExportDone]   = useState('')
   const [importError, setImportError] = useState('')
+
+  const [recoveryCode, setRecoveryCode] = useState(() => getOrCreateCode())
+  const [retention, setRetention]       = useState(() => getRetentionMonths() ?? '')
+  const [restoreCodeInput, setRestoreCodeInput] = useState('')
+  const [restoring, setRestoring]       = useState(false)
+  const [recoveryMsg, setRecoveryMsg]   = useState('')
 
   useEffect(() => {
     Promise.all([api.getSettings(), api.getSettingsOptions()]).then(
@@ -142,6 +152,52 @@ export default function Settings() {
     }
   }
 
+  const handleRetentionChange = (e) => {
+    const v = e.target.value
+    setRetention(v)
+    setRetentionMonths(v ? Number(v) : null)
+  }
+
+  const handleCopyCode = async () => {
+    try {
+      await navigator.clipboard.writeText(recoveryCode)
+      setRecoveryMsg('복사되었습니다.')
+    } catch {
+      setRecoveryMsg('복사에 실패했습니다.')
+    }
+  }
+
+  const handleRegenerateCode = async () => {
+    const ok = window.confirm(
+      '현재 코드로 저장된 서버 백업을 삭제하고 새 코드를 발급합니다.\n' +
+      '기존 코드는 더 이상 복구에 사용할 수 없습니다. 계속할까요?'
+    )
+    if (!ok) return
+    try {
+      await deleteBackup(recoveryCode)
+    } catch (err) {
+      setRecoveryMsg(`삭제 실패: ${err.message}`)
+      return
+    }
+    const fresh = regenerateCode()
+    setRecoveryCode(fresh)
+    setRecoveryMsg('새 코드가 발급되었습니다. 아래 코드를 다시 저장해 주세요.')
+  }
+
+  const handleRestore = async () => {
+    if (!restoreCodeInput.trim()) return
+    setRestoring(true)
+    setImportError('')
+    try {
+      const data = await restoreFromCode(restoreCodeInput.trim())
+      setPreviewData(api.importPreview(data))
+    } catch (err) {
+      setImportError(`복구 실패: ${err.message}`)
+    } finally {
+      setRestoring(false)
+    }
+  }
+
   return (
     <>
       <div className="topbar">
@@ -225,7 +281,7 @@ export default function Settings() {
 
         <div className="section-header">데이터 관리</div>
         <div className="section-advice">
-          <p>차필에서 작성하신 데이터는 사용자의 기기 내부에 저장되며, 어디에도 전송되지 않습니다. 사용자께서 주기적으로 '데이터 내보내기'를 통하여 개인 드라이브, 클라우드 등 안전한 장소에 백업(보관)하실 것을 권장 드립니다.</p>
+          <p>차필에서 작성하신 데이터는 기본적으로 사용자의 기기 내부에 저장됩니다. 아래 '복구코드 백업' 기능을 통해 24시간마다 암호화된 데이터가 자동으로 서버에 전송되며, 코드 없이는 개발자를 포함해 아무도 열람할 수 없습니다.</p>
           <p>기존에 다른 앱에서 차계부를 작성하고 계셨다면 해당 앱에서 엑셀 파일(xlsx)로 저장한 차계부 데이터를 차필에 변환하는 기능을 지원하고 있습니다. 아래 '데이터 가져오기' 버튼을 누르고 JSON 파일이나 엑셀(xlsx) 파일을 선택하면 됩니다.</p>
 
         </div>
@@ -298,6 +354,42 @@ export default function Settings() {
           </div>
         )}
         {importing && <p className="import-loading">가져오는 중…</p>}
+
+        <div className="section-header">복구코드 백업</div>
+        <div className="section-advice">
+          <p>기기 손상 등에 대비해 24시간마다 암호화된 데이터가 자동으로 서버에 백업됩니다. 아래 코드가 있어야 복원할 수 있으니 안전한 곳에 보관하세요.</p>
+        </div>
+        <div className="recovery-code-box">
+          <code>{recoveryCode}</code>
+          <button type="button" className="btn" onClick={handleCopyCode}>복사</button>
+        </div>
+        <div className="form-group">
+          <label>보존 기간</label>
+          <select value={retention} onChange={handleRetentionChange}>
+            <option value="">무기한 보관</option>
+            <option value="12">1년 미접속 시 자동 삭제</option>
+            <option value="6">6개월 미접속 시 자동 삭제</option>
+          </select>
+        </div>
+        <div className="set-migrate">
+          <button type="button" className="btn" onClick={handleRegenerateCode}>코드 재발급 및 기존 백업 삭제</button>
+        </div>
+        {recoveryMsg && <p className="import-done-inline">{recoveryMsg}</p>}
+
+        <div className="form-group">
+          <label>다른 코드로 복구</label>
+          <input
+            type="text"
+            value={restoreCodeInput}
+            onChange={(e) => setRestoreCodeInput(e.target.value)}
+            placeholder="64자리 복구코드 입력"
+          />
+        </div>
+        <div className="set-migrate">
+          <button type="button" className="btn" onClick={handleRestore} disabled={restoring}>
+            {restoring ? '복원하는 중…' : '코드로 복구'}
+          </button>
+        </div>
 
         <div className="section-header">기타</div>
         <div className="set-migrate">
