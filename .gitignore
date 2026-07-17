@@ -1,7 +1,8 @@
 node_modules/
 .claude/
 data/
-app/__pycache__
+app/**/__pycache__
+app/.pytest_cache
 backups/
 .venv/
 .old/
