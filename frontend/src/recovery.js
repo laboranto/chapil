@@ -63,10 +63,6 @@ export async function decryptPayload(code, base64) {
   return JSON.parse(new TextDecoder().decode(plainBuf))
 }
 
-export function hasCode() {
-  return localStorage.getItem(CODE_KEY) !== null
-}
-
 export function getOrCreateCode() {
   let code = localStorage.getItem(CODE_KEY)
   if (!code) {

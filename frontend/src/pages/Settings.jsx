@@ -5,7 +5,7 @@ import { useSettings } from '../context/SettingsContext'
 import DownloadIcon from '../assets/symbols/download.svg?react'
 import UploadIcon   from '../assets/symbols/upload.svg?react'
 import {
-  getOrCreateCode, regenerateCode, deleteBackup, restoreFromCode,
+  getOrCreateCode, regenerateCode, deleteBackup, restoreFromCode, pushBackup,
   getRetentionMonths, setRetentionMonths,
 } from '../recovery'
 
@@ -142,6 +142,7 @@ export default function Settings() {
       })
       setImportDone(result.imported)
       setPreviewData(null)
+      setRecoveryMsg('')
       await refreshSettings()
       const updatedSettings = await api.getSettings()
       setForm(updatedSettings)
@@ -182,6 +183,11 @@ export default function Settings() {
     const fresh = regenerateCode()
     setRecoveryCode(fresh)
     setRecoveryMsg('새 코드가 발급되었습니다. 아래 코드를 다시 저장해 주세요.')
+    try {
+      await pushBackup()
+    } catch {
+      // 서버가 닿지 않는 등 — 다음 앱 실행 시 maybeAutoBackup()이 재시도(조용히 무시)
+    }
   }
 
   const handleRestore = async () => {
@@ -197,7 +203,6 @@ export default function Settings() {
       setRestoreCodeInput('')
     } catch (err) {
       const msg = `복구 실패: ${err.message}`
-      setImportError(msg)
       setRecoveryMsg(msg)
     } finally {
       setRestoring(false)
@@ -337,7 +342,7 @@ export default function Settings() {
               <div className="import-actions">
                 <button
                   className="btn"
-                  onClick={() => { setPreviewData(null); setImportError('') }}
+                  onClick={() => { setPreviewData(null); setImportError(''); setRecoveryMsg('') }}
                 >
                   취소
                 </button>
