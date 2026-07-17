@@ -4,9 +4,10 @@ import { api } from '../api'
 import { useSettings } from '../context/SettingsContext'
 import DownloadIcon from '../assets/symbols/download.svg?react'
 import UploadIcon   from '../assets/symbols/upload.svg?react'
+import RecoveryCodeModal from '../components/RecoveryCodeModal'
 import {
   getOrCreateCode, regenerateCode, deleteBackup, restoreFromCode, pushBackup,
-  getRetentionMonths, setRetentionMonths,
+  getRetentionMonths, setRetentionMonths, hasAcknowledgedNotice,
 } from '../recovery'
 
 const VEHICLE_LABELS = {
@@ -50,6 +51,7 @@ export default function Settings() {
   const [restoring, setRestoring]       = useState(false)
   const [recoveryMsg, setRecoveryMsg]   = useState('')
   const [codeRevealed, setCodeRevealed] = useState(false)
+  const [showRecoveryModal, setShowRecoveryModal] = useState(() => isOnboarding && !hasAcknowledgedNotice())
 
   useEffect(() => {
     Promise.all([api.getSettings(), api.getSettingsOptions()]).then(
@@ -213,6 +215,14 @@ export default function Settings() {
 
   return (
     <>
+      {showRecoveryModal && (
+        <RecoveryCodeModal
+          onClose={() => {
+            setShowRecoveryModal(false)
+            setRetention(getRetentionMonths() ?? '')
+          }}
+        />
+      )}
       <div className="topbar">
         {!isOnboarding
           ? <button type="button" className="btn-cancel" aria-label="취소" onClick={() => navigate(-1)}>✕</button>
