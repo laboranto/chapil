@@ -331,7 +331,7 @@ const { fuelTerm } = useSettings()
 
       <div className="section-footer">
         오늘도 안전운전 하세요
-        <p>차필(chapil) 2026 | {VERSION}</p>
+        <p>차필(chapil) 2026 | v{VERSION}</p>
       </div>
 
       </div>

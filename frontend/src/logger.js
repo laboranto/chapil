@@ -1,3 +1,5 @@
+import { VERSION } from './version.js'
+
 const MAX_ENTRIES = 30
 const _buffer = []
 const _orig = console.error.bind(console)
@@ -20,7 +22,7 @@ export function getLogs() {
 export function getDeviceInfo() {
   const ua = navigator.userAgent
   return {
-    appVersion: '26.6.1',
+    appVersion: VERSION,
     android: ua.match(/Android ([\d.]+)/)?.[1] ?? null,
     model: ua.match(/Android[\d.\s]+;\s*([^)]+?)\s*(?:Build|wv)/)?.[1]?.trim() ?? null,
     webview: ua.match(/Chrome\/([\d.]+)/)?.[1] ?? null,
