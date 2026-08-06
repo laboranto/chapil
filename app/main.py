@@ -5,10 +5,11 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from fastapi.responses import FileResponse
 from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import Optional
+from typing import Optional, List
 from pydantic import BaseModel
 import json
 import os
+import feedback as feedback_store
 from database import get_db, init_db
 
 BASE_DIR = Path(__file__).parent
@@ -113,6 +114,46 @@ def recovery_delete(lookup_key: str):
     conn.execute("DELETE FROM recovery_backups WHERE lookup_key=?", (lookup_key,))
     conn.commit()
     conn.close()
+
+
+class LogEntry(BaseModel):
+    at: Optional[str] = None
+    trace: Optional[str] = None
+
+
+class FeedbackBody(BaseModel):
+    text: str
+    appVersion: Optional[str] = None
+    android: Optional[str] = None
+    model: Optional[str] = None
+    webview: Optional[str] = None
+    logs: List[LogEntry] = []
+
+
+# ── 피드백 수신 ───────────────────────────────────────────────────────
+# 셀프호스팅 앱이지만 피드백만은 개발자 서버(데모 컨테이너)로 모여야 하므로,
+# 프론트엔드가 상대 경로가 아닌 절대 URL로 이 라우트를 호출한다.
+# 복구 백업(/api/recovery)과는 목적지가 정반대라는 점에 주의.
+# DEMO_MODE에서도 막지 않는다 — 데모 컨테이너가 곧 수집처다.
+@app.post("/api/feedback")
+def post_feedback(body: FeedbackBody):
+    text = body.text.strip()
+    if not text:
+        raise HTTPException(status_code=400, detail="피드백 내용이 비어 있습니다.")
+    if len(text) > feedback_store.MAX_TEXT_LEN:
+        raise HTTPException(
+            status_code=400,
+            detail=f"피드백은 {feedback_store.MAX_TEXT_LEN}자를 넘을 수 없습니다.",
+        )
+
+    device = {
+        "appVersion": body.appVersion,
+        "android": body.android,
+        "model": body.model,
+        "webview": body.webview,
+    }
+    feedback_store.save(text, device, [entry.model_dump() for entry in body.logs])
+    return {"ok": True}
 
 
 # ── React SPA 서빙 ────────────────────────────────────────────────────

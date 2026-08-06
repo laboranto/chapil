@@ -6,3 +6,6 @@ import tempfile
 # 테스트 모듈보다 먼저 로드되는 pytest의 특성을 이용한다.
 _tmp_dir = tempfile.mkdtemp(prefix="chapil-test-")
 os.environ["DB_PATH"] = os.path.join(_tmp_dir, "test.db")
+
+# feedback.py의 FEEDBACK_DIR도 같은 이유로 모듈 최상단에서 DATA_DIR을 읽는다.
+os.environ["DATA_DIR"] = _tmp_dir

@@ -2,15 +2,20 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getLogs, getDeviceInfo } from '../logger.js'
 
+// 피드백만은 각자의 서버가 아니라 개발자 서버로 모여야 하므로 절대 URL을 쓴다.
+// (복구 백업 recovery.js는 반대로 상대 경로여야 한다 — 각 사용자 본인 서버로 가야 하므로)
+const FEEDBACK_ENDPOINT = 'https://chapil-demo.varmakoro.net/api/feedback'
+
+// 서버(app/feedback.py MAX_TEXT_LEN)와 같은 값. 넘기면 서버가 400을 주므로
+// 입력 단계에서 막아 "HTTP 400"만 보이는 상황을 피한다.
+const MAX_TEXT_LEN = 4000
+
 async function submitFeedback(payload) {
-  const res = await fetch(
-    'https://iranto.synology.me/nextcloud/ocs/v2.php/apps/forms/api/v3/forms/1/submissions',
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'OCS-APIRequest': 'true' },
-      body: JSON.stringify({ shareHash: '57daHLPC74Y3fL5wa4KPWDip', answers: { 1: [payload] } }),
-    }
-  )
+  const res = await fetch(FEEDBACK_ENDPOINT, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
 }
 
@@ -23,14 +28,15 @@ export default function Feedback() {
     if (!text.trim()) return
     setStatus('sending')
     const info = getDeviceInfo()
-    const logs = getLogs()
-    const payload = [
-      `[피드백]\n${text.trim()}`,
-      `\n[기기 정보]\n앱 버전: ${info.appVersion}\nAndroid: ${info.android ?? '알 수 없음'}\n모델: ${info.model ?? '알 수 없음'}\nWebView: ${info.webview ?? '알 수 없음'}`,
-      logs.length > 0
-        ? `\n[오류 위치 기록 (${logs.length}건)]\n` + logs.map(l => `${l.at}\n${l.trace}`).join('\n---\n')
-        : '\n[오류 기록 없음]',
-    ].join('')
+    // 서버가 마크다운으로 조판하므로 문자열로 합치지 않고 필드를 나눠 보낸다.
+    const payload = {
+      text: text.trim(),
+      appVersion: info.appVersion,
+      android: info.android,
+      model: info.model,
+      webview: info.webview,
+      logs: getLogs(),
+    }
 
     try {
       await submitFeedback(payload)
@@ -63,6 +69,7 @@ export default function Feedback() {
                 value={text}
                 onChange={e => setText(e.target.value)}
                 rows={7}
+                maxLength={MAX_TEXT_LEN}
               />
             </div>
             <div className="feedback-notice">
