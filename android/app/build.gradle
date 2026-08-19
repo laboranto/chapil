@@ -7,11 +7,14 @@ android {
         applicationId "com.iranto.chapil"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        // versionCode는 YYMMDD 형식 — 날짜 순으로 저절로 단조 증가한다.
-        // versionName을 올릴 때 frontend/src/logger.js의 appVersion도 함께 맞출 것
-        // (피드백에 찍히는 버전이 실제와 어긋나지 않도록).
-        versionCode 260806
-        versionName "26.8.6"
+        // versionCode는 YYMMDD + 당일 빌드 순번(0부터) 형식 — 날짜 순으로 저절로
+        // 단조 증가하며, 같은 날 재배포할 때는 끝자리만 올린다. Play는 한 번 쓴
+        // versionCode를 재사용할 수 없으므로 업로드마다 반드시 새 값이어야 한다.
+        //   2608060 = 26-08-06 첫 번째, 2608061 = 같은 날 두 번째
+        // versionName을 올릴 때 frontend/src/version.js의 VERSION도 함께 맞출 것
+        // (홈 화면 표시와 피드백에 찍히는 버전이 실제와 어긋나지 않도록).
+        versionCode 2608062
+        versionName "26.8.6-2"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.

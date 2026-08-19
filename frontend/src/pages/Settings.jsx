@@ -377,6 +377,7 @@ export default function Settings() {
         <div className="section-header">복구코드 백업</div>
         <div className="section-advice">
           <p>기기 손상 등에 대비해 앱을 실행할 때마다 확인하여 마지막 백업으로부터 24시간이 지났으면 암호화된 데이터가 자동으로 서버에 백업됩니다. 아래 코드가 있어야 복원할 수 있으니 안전한 곳에 보관하세요.</p>
+          <p>백업은 기기에서 복구코드로 암호화한 뒤 전송되므로, 서버에는 해독할 수 없는 암호문만 남습니다. 코드를 잃어버리면 개발자도 복원해 드릴 수 없습니다.</p>
         </div>
         <div className="recovery-code-box">
           <code className={codeRevealed ? '' : 'code-hidden'}>{recoveryCode}</code>

@@ -9,8 +9,9 @@
 <img src="docs/showcase/screenshot_v260428a.jpg" alt="8개의 스크린샷이 4열 2행으로 나열되어 있다. 윗줄은 라이트모드, 아랫줄은 다크모드 테마가 적용된 모습. 왼쪽부터 차례로 홈, 주유 기록, 주유 기록 양식, 설정 화면이다." width="800">
 
 ## 기술 스택
-- Backend: FastAPI (Python) REST API
-- Database: SQLite
+- Architecture: 로컬 우선(local-first) — 기록은 기기 내 SQLite에 저장
+- Database: SQLite WASM (OPFS) — 클라이언트 측 데이터 저장소
+- Backend: FastAPI (Python) — 복구코드 백업 / 피드백 / 데모 시드 / SPA 서빙
 - Frontend: React + Vite (SPA)
 - Native App: Capacitor (iOS / Android)
 - Infra: Docker, Docker Compose, Tailscale VPN, Codemagic CI/CD
@@ -19,18 +20,21 @@
 ## 디렉터리 구조
 ```
 chapil/
-├── app/                      # Python 백엔드 (FastAPI)
-│   ├── main.py               # API 진입점
-│   ├── database.py           # DB 연결 및 쿼리
+├── app/                      # Python 백엔드 (FastAPI) — 보조 역할
+│   ├── main.py               # 복구코드/피드백/데모 시드 API, SPA 서빙
+│   ├── database.py           # 백업 메타데이터 저장소
+│   ├── feedback.py           # 피드백 수집
 │   └── seed_demo.json        # 데모 초기 데이터
-├── frontend/                 # React 프론트엔드 (Vite)
+├── frontend/                 # React 프론트엔드 (Vite) — 데이터의 본체
 │   ├── src/
+│   │   ├── db.js             # SQLite WASM(OPFS) 초기화 및 스키마
 │   │   ├── pages/            # 페이지 컴포넌트
 │   │   ├── components/       # 공용 컴포넌트
 │   │   ├── context/          # React Context
+│   │   ├── hooks/            # 커스텀 훅
 │   │   ├── assets/           # 폰트, 아이콘 등
 │   │   ├── App.jsx           # 라우팅
-│   │   ├── api.js            # 백엔드 API 호출
+│   │   ├── api.js            # 백엔드 API 호출 (백업/피드백)
 │   │   └── index.css         # 전역 스타일
 │   └── public/               # PWA manifest, 아이콘
 ├── docs/
@@ -48,7 +52,16 @@ chapil/
 ```
 
 # 사용 방법
-## [ 준비 중 ] 애플 앱스토어, 구글 플레이를 통한 설치
+## [ 모집 중 ] 구글 플레이 비공개 테스터
+차필은 현재 구글 플레이 비공개 테스트 단계에 있습니다. 정식 출시를 위해서는 14일 동안 테스터 12명이 필요하며, 함께해 주실 분을 찾고 있습니다.
+
+1. [테스터 그룹에 가입](https://groups.google.com/g/chapil-testers) — 승인 절차 없이 바로 가입됩니다.
+2. [테스트 참여하기](https://play.google.com/apps/testing/com.iranto.chapil) — 가입에 사용한 구글 계정으로 접속해 참여 버튼을 눌러 주세요. **이 단계를 건너뛰면 테스터로 집계되지 않습니다.**
+3. 안내에 따라 플레이스토어에서 차필을 설치합니다.
+
+설치 후 14일 동안은 그룹 탈퇴나 테스트 참여 취소를 하지 말아 주세요. 그 기간이 지나면 언제든 나가셔도 됩니다. 사용 중 불편한 점은 앱 안의 '피드백 보내기'로 알려주시면 큰 도움이 됩니다.
+
+## [ 준비 중 ] 애플 앱스토어를 통한 설치
 Capacitor 기반의 네이티브 앱 빌드 환경이 구축되어 있으며, 앱스토어 출시를 준비 중입니다.
 
 ## Docker와 VPN을 활용한 셀프호스팅
@@ -88,7 +101,8 @@ docker compose up -d --build
 ---
 
 # 장기 계획
-- 구글 플레이 및 애플 앱스토어를 통한 네이티브 앱 출시를 준비하고 있습니다. 
+- 구글 플레이는 비공개 테스트 중이며, 테스터 요건을 채우는 대로 정식 출시할 예정입니다.
+- 애플 앱스토어 출시도 준비하고 있습니다.
 
 # 업데이트 내역
 ### v26.8.6

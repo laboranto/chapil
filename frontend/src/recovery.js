@@ -1,4 +1,14 @@
+import { Capacitor } from '@capacitor/core'
 import { api } from './api.js'
+
+// 셀프호스팅(브라우저로 자기 서버에 접속)에서는 상대 경로가 곧 본인 서버다.
+// 반면 스토어 앱(네이티브)은 웹뷰 오리진이 로컬 파일 서버라 상대 경로가 자기
+// 자신을 가리켜 백업이 성립하지 않는다. 그래서 네이티브일 때만 기본 서버를 쓴다.
+const DEFAULT_SERVER = 'https://chapil-demo.varmakoro.net'
+
+function apiBase() {
+  return Capacitor.isNativePlatform() ? DEFAULT_SERVER : ''
+}
 
 const CODE_KEY       = 'chapil:recovery:code'
 const RETENTION_KEY  = 'chapil:recovery:retentionMonths'
@@ -133,12 +143,17 @@ export async function pushBackup() {
   const lookupKey = await deriveLookupKey(code)
   const data = await api.exportData()
   const ciphertext = await encryptPayload(code, data)
-  const res = await fetch(`/api/recovery/${lookupKey}`, {
+  const res = await fetch(`${apiBase()}/api/recovery/${lookupKey}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ ciphertext, retention_months: getRetentionMonths() }),
   })
   if (!res.ok) throw new Error(`백업 전송 실패: ${res.status}`)
+  // Capacitor 로컬 서버는 미상 경로에 index.html을 200으로 돌려준다. 응답이 JSON이
+  // 아니면 백엔드에 닿지 않은 것이므로, 성공으로 오인해 LAST_PUSH를 갱신하면 안 된다.
+  if (!res.headers.get('content-type')?.includes('application/json')) {
+    throw new Error('백업 서버에 연결할 수 없습니다.')
+  }
   localStorage.setItem(LAST_PUSH_KEY, String(Date.now()))
 }
 
@@ -154,15 +169,18 @@ export async function maybeAutoBackup() {
 
 export async function restoreFromCode(code) {
   const lookupKey = await deriveLookupKey(code)
-  const res = await fetch(`/api/recovery/${lookupKey}`)
+  const res = await fetch(`${apiBase()}/api/recovery/${lookupKey}`)
   if (res.status === 404) throw new Error('해당 코드로 저장된 백업이 없습니다.')
   if (!res.ok) throw new Error(`복원 실패: ${res.status}`)
+  if (!res.headers.get('content-type')?.includes('application/json')) {
+    throw new Error('백업 서버에 연결할 수 없습니다.')
+  }
   const { ciphertext } = await res.json()
   return decryptPayload(code, ciphertext)
 }
 
 export async function deleteBackup(code) {
   const lookupKey = await deriveLookupKey(code)
-  const res = await fetch(`/api/recovery/${lookupKey}`, { method: 'DELETE' })
+  const res = await fetch(`${apiBase()}/api/recovery/${lookupKey}`, { method: 'DELETE' })
   if (!res.ok && res.status !== 404) throw new Error(`삭제 실패: ${res.status}`)
 }

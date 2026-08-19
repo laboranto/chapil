@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+import { Capacitor } from '@capacitor/core'
 import { api } from './api.js'
 import {
   generateCode, encryptPayload, decryptPayload,
@@ -9,6 +10,17 @@ import {
   copyToClipboard,
 } from './recovery.js'
 
+// 서버가 정상 응답할 때의 최소 형태. recovery.js가 content-type을 검사하므로
+// 목에도 JSON 헤더가 있어야 한다(없으면 '연결할 수 없습니다'로 걸러진다).
+function jsonResponse(extra = {}) {
+  return {
+    ok: true,
+    status: 200,
+    headers: { get: (h) => (h.toLowerCase() === 'content-type' ? 'application/json' : null) },
+    ...extra,
+  }
+}
+
 beforeEach(() => {
   const store = {}
   globalThis.localStorage = {
@@ -17,6 +29,8 @@ beforeEach(() => {
     removeItem: (k) => { delete store[k] },
     clear: () => { for (const k in store) delete store[k] },
   }
+  // 기본은 웹(셀프호스팅) — 상대 경로를 쓴다.
+  vi.spyOn(Capacitor, 'isNativePlatform').mockReturnValue(false)
 })
 
 describe('generateCode', () => {
@@ -105,7 +119,7 @@ describe('고지 확인 상태', () => {
 describe('pushBackup', () => {
   it('exportData 결과를 암호화해서 PUT으로 전송하고 lastPush를 기록한다', async () => {
     vi.spyOn(api, 'exportData').mockResolvedValue({ vehicle: {}, fuel: [], maintenance: [], other: [] })
-    const fetchMock = vi.fn().mockResolvedValue({ ok: true })
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse())
     globalThis.fetch = fetchMock
 
     await pushBackup()
@@ -123,6 +137,33 @@ describe('pushBackup', () => {
 
     await expect(pushBackup()).rejects.toThrow()
   })
+
+  // 네이티브 앱은 웹뷰 오리진이 로컬 파일 서버라, 상대 경로로 보내면 자기 자신에게
+  // 요청이 가서 백업이 성립하지 않는다. 반드시 절대 URL이어야 한다.
+  it('네이티브 앱에서는 기본 서버의 절대 URL로 전송한다', async () => {
+    Capacitor.isNativePlatform.mockReturnValue(true)
+    vi.spyOn(api, 'exportData').mockResolvedValue({ vehicle: {}, fuel: [], maintenance: [], other: [] })
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse())
+    globalThis.fetch = fetchMock
+
+    await pushBackup()
+
+    expect(fetchMock.mock.calls[0][0]).toMatch(/^https:\/\/[^/]+\/api\/recovery\/[0-9a-f]{64}$/)
+  })
+
+  // 로컬 서버가 미상 경로에 index.html을 200으로 돌려주는 경우. 성공으로 오인해
+  // lastPush를 갱신하면 백업이 안 된 채로 24시간 동안 재시도조차 하지 않는다.
+  it('200이지만 JSON이 아닌 응답(HTML)은 성공으로 처리하지 않는다', async () => {
+    vi.spyOn(api, 'exportData').mockResolvedValue({ vehicle: {}, fuel: [], maintenance: [], other: [] })
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      headers: { get: () => 'text/html' },
+    })
+
+    await expect(pushBackup()).rejects.toThrow('백업 서버에 연결할 수 없습니다.')
+    expect(localStorage.getItem('chapil:recovery:lastPush')).toBeNull()
+  })
 })
 
 describe('maybeAutoBackup', () => {
@@ -138,7 +179,7 @@ describe('maybeAutoBackup', () => {
 
   it('푸시 기록이 없으면(최초 실행) 바로 백업을 시도한다', async () => {
     vi.spyOn(api, 'exportData').mockResolvedValue({ vehicle: {}, fuel: [], maintenance: [], other: [] })
-    const fetchMock = vi.fn().mockResolvedValue({ ok: true })
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse())
     globalThis.fetch = fetchMock
 
     await maybeAutoBackup()
@@ -159,11 +200,9 @@ describe('restoreFromCode', () => {
     const code = generateCode()
     const original = { vehicle: { car_plate: '123가4567' }, fuel: [], maintenance: [], other: [] }
     const ciphertext = await encryptPayload(code, original)
-    globalThis.fetch = vi.fn().mockResolvedValue({
-      ok: true,
-      status: 200,
+    globalThis.fetch = vi.fn().mockResolvedValue(jsonResponse({
       json: async () => ({ ciphertext, updated_at: '2026-07-16' }),
-    })
+    }))
 
     const result = await restoreFromCode(code)
 
