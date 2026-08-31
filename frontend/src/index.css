@@ -590,6 +590,26 @@ li{
   backdrop-filter: var(--blur);
 }
 
+/*** 세그먼트 탭 (기록 필터 / 양식 전환 공유) ***/
+.segment-tabs {
+  display: flex; gap: 4px; padding: 6px;
+  background: var(--surface); z-index: 90;
+}
+.segment-tabs.records-tabs {
+  position: sticky; top: calc(var(--safe-top) + 8px);
+}
+.segment-tabs.form-tabs {
+  position: sticky; top: calc(var(--safe-top) + 56px);
+}
+.segment-tab {
+  flex: 1; display: flex; align-items: center; justify-content: center; gap: 5px;
+  padding: 8px 0; border: none; border-radius: var(--radius-sm);
+  background: var(--surface-elevated); color: var(--on-surface-variant);
+  font-size: 13px; font-weight: 500;
+}
+.segment-tab svg { width: 16px; height: 16px; }
+.segment-tab.active { background: var(--accent); color: #fff; }
+
 /* 섹션 제목과 꼬릿말, 도움말 */
 .section-header, .section-footer, .section-advice{ 
   font-size: 16px; font-weight: 400; color: var(--on-surface-variant); margin: 16px 0 8px; }
