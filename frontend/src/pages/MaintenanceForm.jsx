@@ -1,20 +1,20 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, forwardRef, useImperativeHandle } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { api } from '../api'
 
-export default function MaintenanceForm() {
+const BLANK = {
+  date: new Date().toISOString().split('T')[0],
+  item: '', amount: '0', odometer: '', memo: '',
+}
+
+const MaintenanceForm = forwardRef(function MaintenanceForm({ mode = 'standalone' }, ref) {
   const { id } = useParams()
   const navigate = useNavigate()
   const isEdit = Boolean(id)
 
   const [items, setItems] = useState([])
-  const [form, setForm] = useState({
-    date:      new Date().toISOString().split('T')[0],
-    item:      '',
-    amount:    '0',
-    odometer:  '',
-    memo:      '',
-  })
+  const [form, setForm] = useState(BLANK)
+  const [initial, setInitial] = useState(null)
 
   useEffect(() => {
     // 항목 목록과 기존 데이터를 병렬로 불러온다.
@@ -25,27 +25,31 @@ export default function MaintenanceForm() {
       api.getFuel(),
     ]).then(([itemList, records, fuelRecords]) => {
       setItems(itemList)
-      setForm(f => ({ ...f, item: itemList[0] ?? '' }))
 
+      let next
       if (isEdit && records) {
         const r = records.find(r => r.id === Number(id))
-        if (r) setForm({
+        next = r ? {
           date:     r.date,
           item:     r.item,
           amount:   r.amount   ?? '0',
           odometer: r.odometer ?? '',
           memo:     r.memo     ?? '',
-        })
-      } else if (fuelRecords.length > 0) {
-        setForm(f => ({ ...f, odometer: fuelRecords[0].odometer }))
+        } : { ...BLANK, item: itemList[0] ?? '' }
+      } else {
+        next = {
+          ...BLANK,
+          item: itemList[0] ?? '',
+          odometer: fuelRecords.length > 0 ? fuelRecords[0].odometer : '',
+        }
       }
+      setForm(next); setInitial(next)
     })
   }, [id])
 
   const set = (key, val) => setForm(f => ({ ...f, [key]: val }))
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
+  const doSubmit = async () => {
     const body = {
       date:     form.date,
       item:     form.item,
@@ -55,17 +59,28 @@ export default function MaintenanceForm() {
     }
     if (isEdit) await api.updateMaintenance(id, body)
     else        await api.createMaintenance(body)
-    navigate('/maintenance')
+    navigate('/records')
   }
+
+  useImperativeHandle(ref, () => ({
+    submit: doSubmit,
+    isDirty: () => initial != null && JSON.stringify(form) !== JSON.stringify(initial),
+  }))
+
+  const handleSubmit = (e) => { e.preventDefault(); doSubmit() }
 
   return (
     <form onSubmit={handleSubmit}>
-      <div className="topbar">
-        <button type="button" className="btn-cancel" aria-label="취소" onClick={() => navigate('/maintenance')}>✕</button>
-        <button type="submit" className="btn-submit" aria-label="저장"></button>
-      </div>
-      <div className="topbg"></div>
-      <div className="content">
+      {mode === 'standalone' && (
+        <>
+          <div className="topbar">
+            <button type="button" className="btn-cancel" aria-label="취소" onClick={() => navigate('/records')}>✕</button>
+            <button type="submit" className="btn-submit" aria-label="저장"></button>
+          </div>
+          <div className="topbg"></div>
+        </>
+      )}
+      <div className={mode === 'standalone' ? 'content' : 'content no-topbar'}>
 
         <div className="form-group">
           <label>날짜</label>
@@ -101,4 +116,6 @@ export default function MaintenanceForm() {
       </div>
     </form>
   )
-}
+})
+
+export default MaintenanceForm

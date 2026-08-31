@@ -37,13 +37,13 @@ function AppContent() {
         <Route path="/"                        element={<Home />} />
         <Route path="/fuel"                    element={<FuelList />} />
         <Route path="/fuel/new"                element={<FuelForm />} />
-        <Route path="/fuel/:id/edit"           element={<FuelForm />} />
+        <Route path="/records/fuel/:id/edit"        element={<FuelForm />} />
         <Route path="/maintenance"             element={<MaintenanceList />} />
         <Route path="/maintenance/new"         element={<MaintenanceForm />} />
-        <Route path="/maintenance/:id/edit"    element={<MaintenanceForm />} />
+        <Route path="/records/maintenance/:id/edit" element={<MaintenanceForm />} />
         <Route path="/other"                   element={<OtherList />} />
         <Route path="/other/new"               element={<OtherForm />} />
-        <Route path="/other/:id/edit"          element={<OtherForm />} />
+        <Route path="/records/other/:id/edit"       element={<OtherForm />} />
         <Route path="/records"                 element={<Records />} />
         <Route path="/settings"                element={<Settings />} />
         <Route path="/import"                  element={<ImportGuide />} />
