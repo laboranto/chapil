@@ -4,12 +4,11 @@ import { useSettings } from './context/SettingsContext'
 import BottomNav from './components/BottomNav'
 import Onboarding from './pages/Onboarding'
 import Home from './pages/Home'
-import FuelList from './pages/FuelList'
 import FuelForm from './pages/FuelForm'
-import MaintenanceList from './pages/MaintenanceList'
 import MaintenanceForm from './pages/MaintenanceForm'
-import OtherList from './pages/OtherList'
 import OtherForm from './pages/OtherForm'
+import RecordForm from './pages/RecordForm'
+import Records from './pages/Records'
 import Settings from './pages/Settings'
 import ImportGuide from './pages/ImportGuide'
 import Feedback from './pages/Feedback'
@@ -32,20 +31,16 @@ function AppContent() {
   return (
     <>
       <Routes>
-        <Route path="/onboarding"              element={<Onboarding />} />
-        <Route path="/"                        element={<Home />} />
-        <Route path="/fuel"                    element={<FuelList />} />
-        <Route path="/fuel/new"                element={<FuelForm />} />
-        <Route path="/fuel/:id/edit"           element={<FuelForm />} />
-        <Route path="/maintenance"             element={<MaintenanceList />} />
-        <Route path="/maintenance/new"         element={<MaintenanceForm />} />
-        <Route path="/maintenance/:id/edit"    element={<MaintenanceForm />} />
-        <Route path="/other"                   element={<OtherList />} />
-        <Route path="/other/new"               element={<OtherForm />} />
-        <Route path="/other/:id/edit"          element={<OtherForm />} />
-        <Route path="/settings"                element={<Settings />} />
-        <Route path="/import"                  element={<ImportGuide />} />
-        <Route path="/feedback"                element={<Feedback />} />
+        <Route path="/onboarding"                   element={<Onboarding />} />
+        <Route path="/"                             element={<Home />} />
+        <Route path="/records"                      element={<Records />} />
+        <Route path="/records/new"                  element={<RecordForm />} />
+        <Route path="/records/fuel/:id/edit"        element={<FuelForm />} />
+        <Route path="/records/maintenance/:id/edit" element={<MaintenanceForm />} />
+        <Route path="/records/other/:id/edit"       element={<OtherForm />} />
+        <Route path="/settings"                     element={<Settings />} />
+        <Route path="/import"                       element={<ImportGuide />} />
+        <Route path="/feedback"                     element={<Feedback />} />
       </Routes>
       {!hideNav && <BottomNav />}
       {!hideNav && <div className="bottom-bg"></div>}

@@ -2,8 +2,9 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { api } from '../api'
 import { useSettings } from '../context/SettingsContext'
-import DownloadIcon from '../assets/symbols/download.svg?react'
-import UploadIcon   from '../assets/symbols/upload.svg?react'
+import { VERSION } from '../version.js'
+import ImportIcon from '../assets/symbols/import.svg?react'
+import ExportIcon from '../assets/symbols/export.svg?react'
 import RecoveryCodeModal from '../components/RecoveryCodeModal'
 import {
   getOrCreateCode, regenerateCode, deleteBackup, restoreFromCode, pushBackup,
@@ -306,10 +307,10 @@ export default function Settings() {
         </div>
         <div className="set-migrate">
           <button className="btn" onClick={handleImport}>
-            <DownloadIcon/>데이터 가져오기
+            <ImportIcon/>데이터 가져오기
           </button>
           <button className="btn" onClick={handleExport} disabled={exporting}>
-            <UploadIcon/>{exporting ? '내보내는 중…' : '데이터 내보내기'}
+            <ExportIcon/>{exporting ? '내보내는 중…' : '데이터 내보내기'}
           </button>
           {exportDone && <p className="import-done-inline">{exportDone} 다운로드 완료</p>}
         </div>
@@ -420,6 +421,8 @@ export default function Settings() {
             피드백 보내기
           </button>
         </div>
+
+        <div className="section-footer">차필(chapil) v{VERSION}</div>
 
       </div>
     </>

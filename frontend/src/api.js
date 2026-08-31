@@ -1,5 +1,5 @@
 import { getDB } from './db.js';
-import { buildKeysetQuery, nextCursorFrom, PAGE_SIZE } from './pagination';
+import { buildKeysetQuery, buildKeysetUnionQuery, nextCursorFrom, nextUnionCursorFrom, PAGE_SIZE } from './pagination';
 import { Capacitor, registerPlugin } from '@capacitor/core';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 
@@ -129,25 +129,6 @@ export const api = {
   // ── 대시보드 ────────────────────────────────────────────────────────
   getDashboard: async () => {
     const db = getDB();
-    const carBirthRow = firstRow(await db.query("SELECT value FROM settings WHERE key='car_birth'", []));
-    const carBirth = carBirthRow?.value || '';
-    let totalDays = null;
-    if (carBirth) {
-      totalDays = Math.floor((Date.now() - new Date(carBirth).getTime()) / 86400000);
-    }
-
-    const recentFuel = rows(await db.query(
-      "SELECT * FROM fuel ORDER BY date DESC, id DESC LIMIT 5", []
-    ));
-
-    const lastMaintenance = firstRow(await db.query(
-      "SELECT * FROM maintenance ORDER BY date DESC, id DESC LIMIT 1", []
-    ));
-
-    const lastOther = firstRow(await db.query(
-      "SELECT * FROM other ORDER BY date DESC, id DESC LIMIT 1", []
-    ));
-
     const cutoff = cutoffDate(30);
     const fuel30d  = firstRow(await db.query("SELECT SUM(amount) as total FROM fuel WHERE date >= ?",        [cutoff]))?.total || 0;
     const maint30d = firstRow(await db.query("SELECT SUM(amount) as total FROM maintenance WHERE date >= ?", [cutoff]))?.total || 0;
@@ -158,6 +139,8 @@ export const api = {
       " WHERE fuel_economy IS NOT NULL AND fuel_economy > 0 AND fuel_economy <= 50" +
       " AND odometer > 0 AND (interval_km IS NULL OR interval_km < odometer * 0.95)", []
     ));
+
+    const recent = await api.getRecentRecords();
 
     const odomRow = firstRow(await db.query(`
       SELECT odometer FROM (
@@ -170,11 +153,7 @@ export const api = {
     `, []));
 
     return {
-      car_birth:        carBirth,
-      total_days:       totalDays,
-      recent_fuel:      recentFuel,
-      last_maintenance: lastMaintenance,
-      last_other:       lastOther,
+      recent,
       cost_last_30d:    fuel30d + maint30d + other30d,
       avg_economy:      avgRow?.avg ? Math.round(avgRow.avg * 100) / 100 : null,
       latest_odometer:  odomRow?.odometer ?? null,
@@ -252,25 +231,24 @@ export const api = {
 
   // ── 목록 페이지네이션 (keyset) ─────────────────────────────────────
   // 기존 getFuel/getMaintenance/getOther 전체조회는 그대로 둔다(폼 계산·통계용).
-  getFuelPage: async ({ cursor = null, limit = PAGE_SIZE } = {}) => {
+
+  // ── 통합 기록 목록 (필터 탭 MVP) ──────────────────────────────────
+  getRecordsPage: async ({ cursor = null, filter = null, limit = PAGE_SIZE } = {}) => {
     const db = getDB()
-    const { sql, params } = buildKeysetQuery('fuel', cursor, limit)
+    if (filter) {
+      const { sql, params } = buildKeysetQuery(filter, cursor, limit)
+      const rs = rows(await db.query(sql, params)).map(r => ({ ...r, src: filter }))
+      return { rows: rs, nextCursor: nextCursorFrom(rs, limit) }
+    }
+    const { sql, params } = buildKeysetUnionQuery(cursor, limit)
     const rs = rows(await db.query(sql, params))
-    return { rows: rs, nextCursor: nextCursorFrom(rs, limit) }
+    return { rows: rs, nextCursor: nextUnionCursorFrom(rs, limit) }
   },
 
-  getMaintenancePage: async ({ cursor = null, limit = PAGE_SIZE } = {}) => {
+  getRecentRecords: async () => {
     const db = getDB()
-    const { sql, params } = buildKeysetQuery('maintenance', cursor, limit)
-    const rs = rows(await db.query(sql, params))
-    return { rows: rs, nextCursor: nextCursorFrom(rs, limit) }
-  },
-
-  getOtherPage: async ({ cursor = null, limit = PAGE_SIZE } = {}) => {
-    const db = getDB()
-    const { sql, params } = buildKeysetQuery('other', cursor, limit)
-    const rs = rows(await db.query(sql, params))
-    return { rows: rs, nextCursor: nextCursorFrom(rs, limit) }
+    const { sql, params } = buildKeysetUnionQuery(null, 10)
+    return rows(await db.query(sql, params))
   },
 
   // ── 정비 ────────────────────────────────────────────────────────────
