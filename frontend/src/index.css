@@ -528,7 +528,7 @@ li{
 /*** 하단 탭바 ***/
 .bottom-nav {
   position: fixed; display: flex; z-index: 200;
-  width: 275px; max-width: 500px;
+  width: 240px; max-width: 500px;
   bottom: 12px; height: var(--size-nav);
   padding: 2px;
   border: var(--outline); border-radius: var(--radius-lg);

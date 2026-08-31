@@ -3,8 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { api } from '../api'
 import { useSettings } from '../context/SettingsContext'
 // 버튼 아이콘(심볼) svg 이식
-import DownloadIcon        from '../assets/symbols/download.svg?react'
-import UploadIcon        from '../assets/symbols/upload.svg?react'
+import ImportIcon from '../assets/symbols/import.svg?react'
 import CopyIcon from '../assets/symbols/copy.svg?react'
 
 export default function ImportGuide() {
@@ -122,7 +121,7 @@ const copyPrompt = async () => {
             </p>
             <div className="btn-wrap">
               <a className="btn" href={api.templateUrl()} download="chapil_template.json">
-                <DownloadIcon/>예제 파일 다운로드
+                <ImportIcon/>예제 파일 다운로드
               </a>
               <span className={promptCopied ? 'notice' : 'notice transparent'}>복사 완료!</span>
               </div>

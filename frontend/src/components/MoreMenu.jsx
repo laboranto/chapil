@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import OtherIcon from '../assets/symbols/other.svg?react'
+import KebabIcon from '../assets/symbols/kebab.svg?react'
 
 export default function MoreMenu({ onEdit, onDelete }) {
   const [open, setOpen] = useState(false)
@@ -16,7 +16,7 @@ export default function MoreMenu({ onEdit, onDelete }) {
 
   return (
     <div className="more-menu" ref={ref}>
-      <button className="btn-more" onClick={() => setOpen(o => !o)}><OtherIcon /></button>
+      <button className="btn-more" onClick={() => setOpen(o => !o)}><KebabIcon /></button>
       {open && (
         <div className="more-dropdown">
           <button onClick={() => { setOpen(false); onEdit() }}>수정</button>
