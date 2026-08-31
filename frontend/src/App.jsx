@@ -10,6 +10,7 @@ import MaintenanceList from './pages/MaintenanceList'
 import MaintenanceForm from './pages/MaintenanceForm'
 import OtherList from './pages/OtherList'
 import OtherForm from './pages/OtherForm'
+import RecordForm from './pages/RecordForm'
 import Records from './pages/Records'
 import Settings from './pages/Settings'
 import ImportGuide from './pages/ImportGuide'
@@ -44,6 +45,7 @@ function AppContent() {
         <Route path="/other"                   element={<OtherList />} />
         <Route path="/other/new"               element={<OtherForm />} />
         <Route path="/records/other/:id/edit"       element={<OtherForm />} />
+        <Route path="/records/new"             element={<RecordForm />} />
         <Route path="/records"                 element={<Records />} />
         <Route path="/settings"                element={<Settings />} />
         <Route path="/import"                  element={<ImportGuide />} />
