@@ -1,13 +1,11 @@
 import MoreMenu from '../MoreMenu'
 import { useSettings } from '../../context/SettingsContext'
-import { getRecordType } from './recordType'
 
 const fmt = (n) => Number(n).toLocaleString('ko-KR')
 
-export default function FuelCard({ record: r, showTypeIcon = false, onEdit, onDelete }) {
-  const { options, settings, fuelTerm } = useSettings()
+export default function FuelCard({ record: r, onEdit, onDelete }) {
+  const { options, settings } = useSettings()
   const economyUnit = options.car_fuel.find(o => o.code === settings.car_fuel)?.economy_unit ?? 'km/L'
-  const { Icon } = getRecordType('fuel', fuelTerm)
 
   const badOdometer = !r.odometer || r.odometer <= 0
   const suspiciousInterval = r.interval_km && r.odometer && r.interval_km >= r.odometer * 0.95
@@ -17,7 +15,6 @@ export default function FuelCard({ record: r, showTypeIcon = false, onEdit, onDe
   return (
     <div className="card">
       <div className="card-row">
-        {showTypeIcon && <div className="card-icon"><Icon /></div>}
         <div>
           <div className="card-title">{r.date}</div>
           <div className="card-sub">

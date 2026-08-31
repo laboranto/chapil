@@ -42,7 +42,6 @@ function RecordsList({ filter }) {
           <Card
             key={`${r.src}-${r.id}`}
             record={r}
-            showTypeIcon
             onEdit={() => navigate(EDIT_PATH[r.src](r.id))}
             onDelete={() => handleDelete(r.src, r.id)}
           />

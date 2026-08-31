@@ -426,21 +426,6 @@ li{
 .summary-tile b { font-size: 15px; font-weight: 700; }
 .summary-tile > span:last-child { font-size: 11px; color: var(--on-surface-variant); }
 
-/* 목록 카드 요약 전용 | 심볼 표시 */
-.card-icon{
-  color: var(--on-surface-variant);
-  text-align: center;
-  flex-shrink: 0; width: 80px;
-  padding: 8px 10px 0 8px; margin-right: 20px;
-  border-right: var(--outline);
-}
-.card-icon svg{ 
-  width: 75%; height: 50%; padding: 5px;
-}
-.card-icon h5{
-  width: 100%; font-size: 14px;
-  font-weight: 400;
-}
 /* 목록 카드 요약 전용 | 본문 */
 .card-content{
   position: relative;

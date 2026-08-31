@@ -1,14 +1,11 @@
 import MoreMenu from '../MoreMenu'
-import { getRecordType } from './recordType'
 
 const fmt = (n) => Number(n).toLocaleString('ko-KR')
 
-export default function OtherCard({ record: r, showTypeIcon = false, onEdit, onDelete }) {
-  const { Icon } = getRecordType('other')
+export default function OtherCard({ record: r, onEdit, onDelete }) {
   return (
     <div className="card">
       <div className="card-row">
-        {showTypeIcon && <div className="card-icon"><Icon /></div>}
         <div>
           <div className="card-title">{r.item}</div>
           <div className="card-sub">{r.date}{r.odometer ? ` · ${fmt(r.odometer)}km` : ''}</div>

@@ -220,7 +220,7 @@ const economyLabel = fuelOption?.economy_label ?? '연비'
             <div className="section-header">최근 기록</div>
             {data.recent.map(r => {
               const Card = { fuel: FuelCard, maintenance: MaintenanceCard, other: OtherCard }[r.src]
-              return <Card key={`${r.src}-${r.id}`} record={r} showTypeIcon />
+              return <Card key={`${r.src}-${r.id}`} record={r} />
             })}
           </>
         )}
