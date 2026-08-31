@@ -136,18 +136,6 @@ export const api = {
       totalDays = Math.floor((Date.now() - new Date(carBirth).getTime()) / 86400000);
     }
 
-    const recentFuel = rows(await db.query(
-      "SELECT * FROM fuel ORDER BY date DESC, id DESC LIMIT 5", []
-    ));
-
-    const lastMaintenance = firstRow(await db.query(
-      "SELECT * FROM maintenance ORDER BY date DESC, id DESC LIMIT 1", []
-    ));
-
-    const lastOther = firstRow(await db.query(
-      "SELECT * FROM other ORDER BY date DESC, id DESC LIMIT 1", []
-    ));
-
     const cutoff = cutoffDate(30);
     const fuel30d  = firstRow(await db.query("SELECT SUM(amount) as total FROM fuel WHERE date >= ?",        [cutoff]))?.total || 0;
     const maint30d = firstRow(await db.query("SELECT SUM(amount) as total FROM maintenance WHERE date >= ?", [cutoff]))?.total || 0;
@@ -176,9 +164,6 @@ export const api = {
       car_birth:        carBirth,
       total_days:       totalDays,
       recent,
-      recent_fuel:      recentFuel,
-      last_maintenance: lastMaintenance,
-      last_other:       lastOther,
       cost_last_30d:    fuel30d + maint30d + other30d,
       avg_economy:      avgRow?.avg ? Math.round(avgRow.avg * 100) / 100 : null,
       latest_odometer:  odomRow?.odometer ?? null,
