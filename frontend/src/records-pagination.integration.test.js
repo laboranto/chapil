@@ -22,6 +22,9 @@ beforeAll(async () => {
   db.exec(SCHEMA)
   // 같은 날짜 '2026-03-10'에 fuel·maintenance·other 각 1건씩 (src tie-break 유발)
   db.exec("INSERT INTO fuel (date,amount,odometer) VALUES ('2026-03-01',50000,1000),('2026-03-10',60000,1200),('2026-03-20',70000,1500)")
+  // 같은 (date, src) 쌍 → 커서 3번째 항(date=? AND src=? AND id<?) 유발.
+  // 앞선 행이 홀수(03-25 other 1건)라 limit=2 경계가 이 두 fuel 행 사이를 정확히 지난다.
+  db.exec("INSERT INTO fuel (date,amount,odometer) VALUES ('2026-03-22',55000,1300),('2026-03-22',56000,1350)")
   db.exec("INSERT INTO maintenance (date,amount,odometer,item) VALUES ('2026-03-10',80000,1210,'엔진오일'),('2026-03-05',30000,1100,'점검')")
   db.exec("INSERT INTO other (date,amount,odometer,item) VALUES ('2026-03-10',15000,1220,'세차'),('2026-03-25',9000,1600,'주차')")
 })
@@ -42,9 +45,9 @@ describe('UNION 페이지네이션', () => {
       if (!nextCursor) break
       cursor = nextCursor
     }
-    expect(all).toHaveLength(7) // 3 + 2 + 2
+    expect(all).toHaveLength(9) // 5 + 2 + 2
     const keys = all.map(r => `${r.src}:${r.id}`)
-    expect(new Set(keys).size).toBe(7) // 중복 없음
+    expect(new Set(keys).size).toBe(9) // 중복 없음
     // 정렬 단조성: date DESC, 그다음 src ASC, 그다음 id DESC
     const rank = { fuel: 0, maintenance: 1, other: 2 }
     for (let i = 1; i < all.length; i++) {

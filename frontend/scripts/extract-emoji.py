@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 """NotoEmoji-Regular.ttf에서 지정 글리프만 뽑아 currentColor SVG로 저장.
-사용: python scripts/extract-emoji.py src/assets/symbols"""
+사용: python scripts/extract-emoji.py src/assets/symbols
+
+fontTools 4.63.0으로 생성 (SVGPathPen 출력 포맷이 버전에 따라 달라질 수 있음).
+"""
 import sys
 from pathlib import Path
 from fontTools.ttLib import TTFont

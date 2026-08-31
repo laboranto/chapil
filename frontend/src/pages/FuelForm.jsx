@@ -60,14 +60,13 @@ const FuelForm = forwardRef(function FuelForm({ mode = 'standalone' }, ref) {
   }
 
   useImperativeHandle(ref, () => ({
-    submit: doSubmit,
     isDirty: () => initial != null && JSON.stringify(form) !== JSON.stringify(initial),
   }))
 
   const handleSubmit = (e) => { e.preventDefault(); doSubmit() }
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form id={mode === 'embedded' ? 'record-form' : undefined} onSubmit={handleSubmit}>
       {mode === 'standalone' && (
         <>
           <div className="topbar">

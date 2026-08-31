@@ -5,10 +5,7 @@ import SegmentTabs from '../components/SegmentTabs'
 import FuelForm from './FuelForm'
 import MaintenanceForm from './MaintenanceForm'
 import OtherForm from './OtherForm'
-import FuelIcon        from '../assets/symbols/fuel.svg?react'
-import ChargeIcon      from '../assets/symbols/charge.svg?react'
-import MaintenanceIcon from '../assets/symbols/maintenance.svg?react'
-import OtherIcon       from '../assets/symbols/other.svg?react'
+import { getRecordType } from '../components/records/recordType'
 
 const FORM = { fuel: FuelForm, maintenance: MaintenanceForm, other: OtherForm }
 
@@ -18,11 +15,7 @@ export default function RecordForm() {
   const [tab, setTab] = useState('fuel')
   const formRef = useRef(null)
 
-  const options = [
-    { key: 'fuel', label: fuelTerm, Icon: fuelTerm === '충전' ? ChargeIcon : FuelIcon },
-    { key: 'maintenance', label: '정비', Icon: MaintenanceIcon },
-    { key: 'other', label: '기타', Icon: OtherIcon },
-  ]
+  const options = ['fuel', 'maintenance', 'other'].map(key => ({ key, ...getRecordType(key, fuelTerm) }))
 
   const handleTab = (key) => {
     if (key === tab) return
@@ -36,7 +29,7 @@ export default function RecordForm() {
     <div>
       <div className="topbar">
         <button type="button" className="btn-cancel" aria-label="취소" onClick={() => navigate('/records')}>✕</button>
-        <button type="button" className="btn-submit" aria-label="저장" onClick={() => formRef.current?.submit()}></button>
+        <button type="submit" form="record-form" className="btn-submit" aria-label="저장"></button>
       </div>
       <div className="topbg"></div>
       <SegmentTabs className="form-tabs" options={options} value={tab} onChange={handleTab} allowDeselect={false} />

@@ -129,13 +129,6 @@ export const api = {
   // ── 대시보드 ────────────────────────────────────────────────────────
   getDashboard: async () => {
     const db = getDB();
-    const carBirthRow = firstRow(await db.query("SELECT value FROM settings WHERE key='car_birth'", []));
-    const carBirth = carBirthRow?.value || '';
-    let totalDays = null;
-    if (carBirth) {
-      totalDays = Math.floor((Date.now() - new Date(carBirth).getTime()) / 86400000);
-    }
-
     const cutoff = cutoffDate(30);
     const fuel30d  = firstRow(await db.query("SELECT SUM(amount) as total FROM fuel WHERE date >= ?",        [cutoff]))?.total || 0;
     const maint30d = firstRow(await db.query("SELECT SUM(amount) as total FROM maintenance WHERE date >= ?", [cutoff]))?.total || 0;
@@ -147,8 +140,7 @@ export const api = {
       " AND odometer > 0 AND (interval_km IS NULL OR interval_km < odometer * 0.95)", []
     ));
 
-    const rq = buildKeysetUnionQuery(null, 10);
-    const recent = rows(await db.query(rq.sql, rq.params));
+    const recent = await api.getRecentRecords();
 
     const odomRow = firstRow(await db.query(`
       SELECT odometer FROM (
@@ -161,8 +153,6 @@ export const api = {
     `, []));
 
     return {
-      car_birth:        carBirth,
-      total_days:       totalDays,
       recent,
       cost_last_30d:    fuel30d + maint30d + other30d,
       avg_economy:      avgRow?.avg ? Math.round(avgRow.avg * 100) / 100 : null,

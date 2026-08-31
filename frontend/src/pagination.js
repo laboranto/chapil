@@ -28,6 +28,10 @@ export function nextCursorFrom(rows, limit) {
 // src 우선순위: fuel < maintenance < other (리터럴 문자열 비교).
 // 정렬: date DESC, src ASC, id DESC.
 
+// ⚠️ 통합 모드 행은 아래 11개 컬럼이 전부다 (id,date,src,amount,odometer,
+//    interval_km,liters,unit_price,fuel_economy,item,memo). 카드 컴포넌트가
+//    fuel의 type/location/category 등을 읽으면 필터 탭에서만 동작하고
+//    전체 탭에서 조용히 undefined가 된다. 새 필드가 필요하면 세 SELECT 모두에 추가할 것.
 const UNION_BODY =
   "SELECT id, date, 'fuel' AS src, amount, odometer, interval_km, liters, unit_price, fuel_economy, NULL AS item, memo FROM fuel" +
   " UNION ALL " +

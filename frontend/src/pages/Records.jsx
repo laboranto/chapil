@@ -7,10 +7,7 @@ import SegmentTabs from '../components/SegmentTabs'
 import FuelCard from '../components/records/FuelCard'
 import MaintenanceCard from '../components/records/MaintenanceCard'
 import OtherCard from '../components/records/OtherCard'
-import FuelIcon        from '../assets/symbols/fuel.svg?react'
-import ChargeIcon      from '../assets/symbols/charge.svg?react'
-import MaintenanceIcon from '../assets/symbols/maintenance.svg?react'
-import OtherIcon       from '../assets/symbols/other.svg?react'
+import { getRecordType } from '../components/records/recordType'
 
 const CARD = { fuel: FuelCard, maintenance: MaintenanceCard, other: OtherCard }
 const EDIT_PATH = {
@@ -61,11 +58,7 @@ export default function Records() {
   const { fuelTerm } = useSettings()
   const [filter, setFilter] = useState(null)
 
-  const options = [
-    { key: 'fuel', label: fuelTerm, Icon: fuelTerm === '충전' ? ChargeIcon : FuelIcon },
-    { key: 'maintenance', label: '정비', Icon: MaintenanceIcon },
-    { key: 'other', label: '기타', Icon: OtherIcon },
-  ]
+  const options = ['fuel', 'maintenance', 'other'].map(key => ({ key, ...getRecordType(key, fuelTerm) }))
 
   return (
     <>
