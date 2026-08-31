@@ -326,6 +326,8 @@ li{
   max-width: var(--size-layout); margin: 0 auto;
 }
 
+.content.no-topbar { padding-top: calc(var(--safe-top) + 8px); }
+
 /*** 설정 페이지 ***/
 .set-migrate{
   display: flex; justify-content: center; gap: 2.5%;
