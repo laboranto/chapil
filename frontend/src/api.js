@@ -1,5 +1,5 @@
 import { getDB } from './db.js';
-import { buildKeysetQuery, nextCursorFrom, PAGE_SIZE } from './pagination';
+import { buildKeysetQuery, buildKeysetUnionQuery, nextCursorFrom, nextUnionCursorFrom, PAGE_SIZE } from './pagination';
 import { Capacitor, registerPlugin } from '@capacitor/core';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 
@@ -159,6 +159,9 @@ export const api = {
       " AND odometer > 0 AND (interval_km IS NULL OR interval_km < odometer * 0.95)", []
     ));
 
+    const rq = buildKeysetUnionQuery(null, 10);
+    const recent = rows(await db.query(rq.sql, rq.params));
+
     const odomRow = firstRow(await db.query(`
       SELECT odometer FROM (
         SELECT date, odometer FROM fuel       WHERE odometer IS NOT NULL
@@ -172,6 +175,7 @@ export const api = {
     return {
       car_birth:        carBirth,
       total_days:       totalDays,
+      recent,
       recent_fuel:      recentFuel,
       last_maintenance: lastMaintenance,
       last_other:       lastOther,
@@ -252,25 +256,24 @@ export const api = {
 
   // ── 목록 페이지네이션 (keyset) ─────────────────────────────────────
   // 기존 getFuel/getMaintenance/getOther 전체조회는 그대로 둔다(폼 계산·통계용).
-  getFuelPage: async ({ cursor = null, limit = PAGE_SIZE } = {}) => {
+
+  // ── 통합 기록 목록 (필터 탭 MVP) ──────────────────────────────────
+  getRecordsPage: async ({ cursor = null, filter = null, limit = PAGE_SIZE } = {}) => {
     const db = getDB()
-    const { sql, params } = buildKeysetQuery('fuel', cursor, limit)
+    if (filter) {
+      const { sql, params } = buildKeysetQuery(filter, cursor, limit)
+      const rs = rows(await db.query(sql, params)).map(r => ({ ...r, src: filter }))
+      return { rows: rs, nextCursor: nextCursorFrom(rs, limit) }
+    }
+    const { sql, params } = buildKeysetUnionQuery(cursor, limit)
     const rs = rows(await db.query(sql, params))
-    return { rows: rs, nextCursor: nextCursorFrom(rs, limit) }
+    return { rows: rs, nextCursor: nextUnionCursorFrom(rs, limit) }
   },
 
-  getMaintenancePage: async ({ cursor = null, limit = PAGE_SIZE } = {}) => {
+  getRecentRecords: async () => {
     const db = getDB()
-    const { sql, params } = buildKeysetQuery('maintenance', cursor, limit)
-    const rs = rows(await db.query(sql, params))
-    return { rows: rs, nextCursor: nextCursorFrom(rs, limit) }
-  },
-
-  getOtherPage: async ({ cursor = null, limit = PAGE_SIZE } = {}) => {
-    const db = getDB()
-    const { sql, params } = buildKeysetQuery('other', cursor, limit)
-    const rs = rows(await db.query(sql, params))
-    return { rows: rs, nextCursor: nextCursorFrom(rs, limit) }
+    const { sql, params } = buildKeysetUnionQuery(null, 10)
+    return rows(await db.query(sql, params))
   },
 
   // ── 정비 ────────────────────────────────────────────────────────────

@@ -5,9 +5,12 @@ import { usePaginatedList } from '../hooks/usePaginatedList'
 
 const fmt = (n) => Number(n).toLocaleString('ko-KR')
 
+// 안정적인 함수 참조(usePaginatedList의 dep) — 인라인 화살표면 매 렌더 새 참조가 되어 옵저버가 재생성됨.
+const fetchMaintenancePage = (opts) => api.getRecordsPage({ ...opts, filter: 'maintenance' })
+
 export default function MaintenanceList() {
   const navigate = useNavigate()
-  const { records, hasMore, sentinelRef, removeRecord } = usePaginatedList(api.getMaintenancePage)
+  const { records, hasMore, sentinelRef, removeRecord } = usePaginatedList(fetchMaintenancePage)
 
   const handleDelete = async (id) => {
     if (!window.confirm('삭제할까요?')) return
