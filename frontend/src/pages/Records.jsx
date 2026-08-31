@@ -31,7 +31,7 @@ function RecordsList({ filter }) {
   const handleDelete = async (src, id) => {
     if (!window.confirm('삭제할까요?')) return
     await DELETE_API[src](id)
-    removeRecord(id)
+    removeRecord(id, src)
   }
 
   if (records.length === 0 && !hasMore)

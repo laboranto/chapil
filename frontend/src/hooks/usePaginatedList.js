@@ -32,8 +32,8 @@ export function usePaginatedList(fetchPage) {
     }
   }, [fetchPage])
 
-  const removeRecord = useCallback((id) => {
-    setRecords(prev => prev.filter(r => r.id !== id))
+  const removeRecord = useCallback((id, src) => {
+    setRecords(prev => prev.filter(r => src ? !(r.id === id && r.src === src) : r.id !== id))
   }, [])
 
   // 마운트 시 첫 페이지 1회 로드 (StrictMode 이중 실행 방지: didInit 가드)
