@@ -556,9 +556,13 @@ li{
 }
 .segment-tabs.form-tabs {
   position: sticky;
-  margin-top: calc(var(--safe-top) + 80px);
+  max-width: var(--size-layout);
+  margin: calc(var(--safe-top) + 80px) auto 0;
+  padding: 6px 16px;
   top: calc(var(--safe-top) + 80px);
 }
+/* 탭이 topbar 바로 밑에 붙으므로 그라데이션 틈으로 본문이 비치지 않게 */
+.topbar:has(~ .form-tabs) { background: var(--surface); }
 .segment-tab {
   flex: 1; display: flex; align-items: center; justify-content: center; gap: 5px;
   padding: 8px 0; border: none; border-radius: var(--radius-sm);
