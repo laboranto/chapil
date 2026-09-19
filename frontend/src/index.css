@@ -739,6 +739,17 @@ li{
    0.82 = --accent(명도 50%) → --accent-press(41%)와 같은 정도. */
 .btn-add:active { filter: brightness(0.82); }
 
+/* 축약된 헤더 아래 모서리의 굴절. 목록이 이 경계로 흘러드는 지점이라
+   내비 바가 휘어 보이는 자리다.
+   블러는 --blur 그대로 둔다. 필터 체인에서 블러가 변위를 뭉개는 건 맞지만,
+   여기 글자는 스크롤하는 목록 위에 얹히므로 가독성이 먼저다. 실측으로
+   blur를 20→8→4px로 낮춰도 화면 차이가 0.8% 픽셀에 그쳤다 — 흰 목록이라
+   굴절시킬 대비가 애초에 없다. 사진처럼 대비 큰 배경에서만 값을 한다. */
+[data-glass-bar="on"] .summary-header.collapsed {
+  -webkit-backdrop-filter: url(#chapil-glass-bar) var(--blur);
+  backdrop-filter: url(#chapil-glass-bar) var(--blur);
+}
+
 /* 굴절 — glassRefraction.js가 필터를 실제로 만들어 붙였을 때만 켜진다.
    테마 선택자가 아니라 '기능이 되느냐'로 가르는 자리다. breeze·material은
    칠이 불투명해서 backdrop이 안 보이므로 이 규칙이 걸려도 달라지는 게 없다.

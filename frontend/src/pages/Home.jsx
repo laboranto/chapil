@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback, useSyncExternalStore } from '
 import { Link, useLocation } from 'react-router-dom'
 import { sheetState } from '../sheet'
 import { subscribe, getRevision } from '../recordsRevision'
+import { installBarRefraction } from '../glassRefraction'
 import { api } from '../api'
 import { useSettings } from '../context/SettingsContext'
 import { useCollapseOnScroll } from '../hooks/useCollapseOnScroll'
@@ -119,6 +120,10 @@ const economyLabel = fuelOption?.economy_label ?? '연비'
   const location = useLocation()
   const [filter, setFilter] = useState(null)
   const { collapsed, sentinelRef } = useCollapseOnScroll()
+  // 축약된 헤더 아래 모서리의 굴절. 폭이 뷰포트를 타므로 크기가 바뀌면 다시 굽는다.
+  // 지원 안 하면 아무것도 안 하고 빠진다(html에 data-glass-bar가 안 붙는다).
+  const headerRef = useRef(null)
+  useEffect(() => installBarRefraction(headerRef.current), [])
   const tabOptions = ['fuel', 'maintenance', 'other'].map(key => ({ key, ...getRecordType(key, fuelTerm) }))
 
   // 시트로 띄운 양식에서 기록을 바꾸면 홈은 마운트된 채라 스스로는 모른다.
@@ -217,7 +222,7 @@ const economyLabel = fuelOption?.economy_label ?? '연비'
         {/* 헤더보다 앞(위)에 있어야 헤더가 줄어도 안 밀린다. 높이 40px = 축약 시작 지점 */}
         <div ref={sentinelRef} className="collapse-sentinel" />
 
-        <header className={'summary-header' + (collapsed ? ' collapsed' : '')}>
+        <header ref={headerRef} className={'summary-header' + (collapsed ? ' collapsed' : '')}>
           {identityBlock}
           <div className="summary-tiles">
             <div className="summary-tile"><span>한 달 지출</span><span><b>{data ? fmt(data.cost_last_30d ?? 0) : '-'}</b> 원</span></div>

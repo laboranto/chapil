@@ -10,7 +10,8 @@
 // 남는다. 그 상태는 "유리 농도를 꺼둔 iOS"로 읽히므로 깨진 화면이 아니다.
 // WebKit이 열어주면 이 파일은 그대로 두고 저절로 켜진다.
 
-const ID = 'chapil-glass'
+const FAB_ID = 'chapil-glass'
+const BAR_ID = 'chapil-glass-bar'
 const N_GLASS = 1.5   // 유리의 굴절률(공기 1)
 
 // 볼록 베젤. u=0이 바깥 모서리, u=1이 베젤 끝(평평한 면의 시작).
@@ -69,7 +70,7 @@ export function installGlassRefraction({ size = 56, bezel = 12, thickness = 14 }
   // 파싱만 통과하고 렌더는 안 하는 브라우저가 있으므로 이 검사만으로는 부족하지만,
   // 안 되는 쪽에서 필터가 걸려 배경이 사라지는 일은 없다(필터가 무시될 뿐이다).
   if (typeof CSS === 'undefined' || !CSS.supports('backdrop-filter', 'url(#x)')) return false
-  if (document.getElementById(ID)) return true
+  if (document.getElementById(FAB_ID)) return true
 
   const baked = bakeMap(size, bezel, thickness)
   if (!baked) return false
@@ -82,7 +83,7 @@ export function installGlassRefraction({ size = 56, bezel = 12, thickness = 14 }
   // 필터는 기본이 linearRGB다. 같은 회색값이 다른 거리를 밀어내므로 sRGB로 강제한다.
   // feImage에 data URI를 쓰면 WebKit이 조용히 거부하므로 blob으로 넘긴다.
   svg.innerHTML =
-    `<filter id="${ID}" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"` +
+    `<filter id="${FAB_ID}" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"` +
     ` x="0" y="0" width="${size}" height="${size}">` +
     `<feImage x="0" y="0" width="${size}" height="${size}" result="map"/>` +
     `<feDisplacementMap in="SourceGraphic" in2="map" scale="${baked.max.toFixed(2)}"` +
@@ -96,4 +97,88 @@ export function installGlassRefraction({ size = 56, bezel = 12, thickness = 14 }
     document.documentElement.dataset.glass = 'on'
   })
   return true
+}
+
+// 공통 껍데기: 변위 맵을 물린 SVG 필터를 만들어 붙인다.
+function mountFilter(id, w, h, scale) {
+  let svg = document.getElementById(`${id}-svg`)
+  if (!svg) {
+    svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+    svg.id = `${id}-svg`
+    svg.setAttribute('aria-hidden', 'true')
+    svg.setAttribute('width', '0'); svg.setAttribute('height', '0')
+    svg.style.cssText = 'position:absolute;pointer-events:none'
+    document.body.appendChild(svg)
+  }
+  svg.innerHTML =
+    `<filter id="${id}" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"` +
+    ` x="0" y="0" width="${w}" height="${h}">` +
+    `<feImage x="0" y="0" width="${w}" height="${h}" result="map"/>` +
+    `<feDisplacementMap in="SourceGraphic" in2="map" scale="${scale.toFixed(2)}"` +
+    ` xChannelSelector="R" yChannelSelector="G"/>` +
+    `</filter>`
+  return svg
+}
+
+// 아래 모서리에만 베젤이 있는 띠. 내비 바처럼 목록이 밑으로 흘러드는
+// 경계에서만 휘어야 하므로 좌우·위는 건드리지 않는다(화면 가장자리라
+// 거기까지 휘면 어색하다). y로만 변하므로 한 행만 계산해 가로로 늘린다.
+function bakeBottomEdge(w, h, bezel, thickness) {
+  const steps = 128
+  const mags = Array.from({ length: steps }, (_, i) => displacement(i / (steps - 1), bezel, thickness))
+  const max = Math.max(...mags)
+  if (!(max > 0)) return null
+
+  const cv = document.createElement('canvas')
+  cv.width = w; cv.height = h
+  const ctx = cv.getContext('2d')
+  const img = ctx.createImageData(w, h)
+  for (let y = 0; y < h; y++) {
+    const fromEdge = h - (y + 0.5)
+    let ny = 0
+    if (fromEdge >= 0 && fromEdge < bezel) {
+      const u = fromEdge / bezel
+      // 볼록 베젤은 바깥(아래) 배경을 위로 끌어온다 — 아래에서 샘플한다.
+      ny = mags[Math.min(steps - 1, Math.round(u * (steps - 1)))] / max
+    }
+    const g = Math.round(128 + ny * 127)
+    for (let x = 0; x < w; x++) {
+      const o = (y * w + x) * 4
+      img.data[o] = 128; img.data[o + 1] = g; img.data[o + 2] = 128; img.data[o + 3] = 255
+    }
+  }
+  ctx.putImageData(img, 0, 0)
+  return { canvas: cv, max }
+}
+
+// 축약된 요약 헤더용. 폭이 뷰포트를 타므로 크기가 바뀔 때마다 다시 굽는다.
+// backdrop-filter는 요소 크기에 자동으로 안 맞춰진다(kube.io의 주의사항).
+export function installBarRefraction(el, { bezel = 14, thickness = 16 } = {}) {
+  if (typeof CSS === 'undefined' || !CSS.supports('backdrop-filter', 'url(#x)')) return () => {}
+
+  let lastW = 0, lastH = 0, url = null
+  const rebake = () => {
+    const w = Math.round(el.offsetWidth), h = Math.round(el.offsetHeight)
+    if (!w || !h || (w === lastW && h === lastH)) return
+    lastW = w; lastH = h
+    const baked = bakeBottomEdge(w, h, bezel, thickness)
+    if (!baked) return
+    const svg = mountFilter(BAR_ID, w, h, baked.max)
+    baked.canvas.toBlob((blob) => {
+      if (!blob) return
+      if (url) URL.revokeObjectURL(url)
+      url = URL.createObjectURL(blob)
+      svg.querySelector('feImage').setAttribute('href', url)
+      document.documentElement.dataset.glassBar = 'on'
+    })
+  }
+
+  const ro = new ResizeObserver(rebake)
+  ro.observe(el)
+  rebake()
+  return () => {
+    ro.disconnect()
+    if (url) URL.revokeObjectURL(url)
+    delete document.documentElement.dataset.glassBar
+  }
 }
