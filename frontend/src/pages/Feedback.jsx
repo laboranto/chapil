@@ -49,7 +49,7 @@ export default function Feedback() {
   return (
     <>
       <div className="topbar">
-        <button type="button" className="btn-cancel" aria-label="취소" onClick={() => navigate(-1)}>✕</button>
+        <button type="button" className="btn-cancel" aria-label="취소" onClick={() => navigate('/settings')}>✕</button>
         <h1>피드백</h1>
       </div>
       <div className="topbg"></div>
@@ -57,7 +57,7 @@ export default function Feedback() {
         {status === 'done' ? (
           <div className="feedback-done">
             <p>소중한 의견 감사합니다!</p>
-            <button className="btn" onClick={() => navigate(-1)}>돌아가기</button>
+            <button className="btn" onClick={() => navigate('/settings')}>돌아가기</button>
           </div>
         ) : (
           <>

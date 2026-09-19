@@ -222,7 +222,7 @@ export default function Settings() {
       )}
       <div className="topbar">
         {!isOnboarding
-          ? <button type="button" className="btn-cancel" aria-label="취소" onClick={() => navigate(-1)}>✕</button>
+          ? <button type="button" className="btn-cancel" aria-label="취소" onClick={() => navigate('/')}>✕</button>
           : <span />
         }
         <h1>설정</h1>

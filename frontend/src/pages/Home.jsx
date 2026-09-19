@@ -121,9 +121,8 @@ const economyLabel = fuelOption?.economy_label ?? '연비'
 
   // useEffect: 컴포넌트가 처음 화면에 나타날 때 한 번 실행된다.
   // 두 번째 인자 []는 "의존성 배열"로, 빈 배열이면 마운트 시 딱 한 번만 실행.
-  useEffect(() => {
-    api.getDashboard().then(setData)
-  }, [])
+  const loadDashboard = useCallback(() => api.getDashboard().then(setData), [])
+  useEffect(() => { loadDashboard() }, [loadDashboard])
 
   // fmt: 숫자를 천 단위 구분 형식으로 변환한다. (예: 50000 → "50,000")
   const fmt = (n) => Number(n).toLocaleString('ko-KR')
@@ -216,7 +215,7 @@ const economyLabel = fuelOption?.economy_label ?? '연비'
           <SegmentTabs className="records-tabs" options={tabOptions} value={filter} onChange={setFilter} allowDeselect />
         </header>
 
-        <RecordsList key={filter ?? 'all'} filter={filter} />
+        <RecordsList key={filter ?? 'all'} filter={filter} onMutate={loadDashboard} />
       </div>
       {carImageModal}
       <input ref={imgInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFileSelect} />

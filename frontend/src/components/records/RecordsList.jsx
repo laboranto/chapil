@@ -14,7 +14,7 @@ const EDIT_PATH = {
 }
 const DELETE_API = { fuel: api.deleteFuel, maintenance: api.deleteMaintenance, other: api.deleteOther }
 
-export default function RecordsList({ filter }) {
+export default function RecordsList({ filter, onMutate }) {
   const navigate = useNavigate()
   const fetchPage = useCallback(
     ({ cursor }) => api.getRecordsPage({ cursor, filter }),
@@ -26,6 +26,7 @@ export default function RecordsList({ filter }) {
     if (!window.confirm('삭제할까요?')) return
     await DELETE_API[src](id)
     removeRecord(id, src)
+    onMutate?.()   // 추가·수정은 홈이 리마운트되며 요약을 다시 읽지만, 삭제는 제자리라 직접 알려야 한다
   }
 
   if (records.length === 0 && !hasMore)
