@@ -1,7 +1,7 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, useSyncExternalStore } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { sheetState } from '../sheet'
-import { useRecordsRevision } from '../recordsRevision'
+import { subscribe, getRevision } from '../recordsRevision'
 import { api } from '../api'
 import { useSettings } from '../context/SettingsContext'
 import { useCollapseOnScroll } from '../hooks/useCollapseOnScroll'
@@ -129,7 +129,7 @@ const economyLabel = fuelOption?.economy_label ?? '연비'
   // 넘게 펼쳐둔 상태에서 저장하면 스크롤이 한 번 튄다(측정: 4157 → 2999).
   // 양식이 전체 페이지였을 땐 무조건 맨 위로 갔으니 퇴보는 아니다. 행만
   // 갈아끼우려면 생성·수정·삭제 배선을 셋으로 쪼개야 해서 v1에서는 안 한다.
-  const revision = useRecordsRevision()
+  const revision = useSyncExternalStore(subscribe, getRevision)
   useEffect(() => { api.getDashboard().then(setData) }, [revision])
 
   // fmt: 숫자를 천 단위 구분 형식으로 변환한다. (예: 50000 → "50,000")

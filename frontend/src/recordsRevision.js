@@ -1,5 +1,3 @@
-import { useSyncExternalStore } from 'react'
-
 // 기록이 바뀔 때마다 번호를 올린다. 홈은 이 번호를 보고 목록·요약을 다시 읽는다.
 //
 // 양식이 전체 페이지였을 땐 저장하고 홈으로 돌아오면 홈이 새로 마운트되면서
@@ -16,7 +14,8 @@ export function bumpRecords() {
   listeners.forEach(fn => fn())
 }
 
-const subscribe = (fn) => { listeners.add(fn); return () => listeners.delete(fn) }
-
-export const useRecordsRevision = () =>
-  useSyncExternalStore(subscribe, () => revision, () => revision)
+// useSyncExternalStore에 그대로 넘기는 짝. 훅은 여기서 안 만든다 —
+// api.js가 이 모듈을 부르므로, 여기에 react를 끌어들이면 데이터 계층이
+// react에 의존하게 된다(방향이 거꾸로다).
+export const subscribe = (fn) => { listeners.add(fn); return () => listeners.delete(fn) }
+export const getRevision = () => revision
