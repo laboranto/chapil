@@ -25,6 +25,10 @@
 
 /* 구조 토큰 — 테마와 무관하다 */
 :root {
+  /* 토큰만 어둡게 바꾸면 UA가 그리는 것들(select 목록, date 달력, 캐럿,
+     자동완성 배경, dialog 기본 ::backdrop)은 밝은 채로 남는다. */
+  color-scheme: light dark;
+
   /* 차필 시그니처 색. 테마가 바뀌어도 이 파랑은 그대로다.
      기존 rgba(32,128,225,0.75)에서 알파를 걷은 값 — 흰 배경에 합성하면 대비가
      2.8:1까지 떨어지던 것이 4.0:1이 된다(AA 4.5:1에는 여전히 못 미침). */
@@ -237,7 +241,7 @@ button:active{ box-shadow: var(--shadow-active); }
   color: var(--on-surface-variant);
   background-color: var(--surface-elevated);
   box-shadow: var(--shadow);
-  backdrop-filter: var(--blur);
+  -webkit-backdrop-filter: var(--blur); backdrop-filter: var(--blur);
   border: var(--outline); border-radius: var(--radius-lg);
   font-weight: 600;
   z-index: 100; opacity: 1;
@@ -375,10 +379,10 @@ li{
   display: flex; align-items: center; justify-content: center;
 }
 .car-modal {
-  background: var(--surface-elevated);
+  /* 콘텐츠 레이어라 유리를 바르지 않는다 — 토큰 블록의 HIG 주석 참고 */
+  background: var(--surface);
   border-radius: var(--radius-sm);
   box-shadow: var(--shadow);
-  backdrop-filter: var(--blur);
   overflow: hidden;
   display: flex; flex-direction: column;
 }
@@ -415,10 +419,10 @@ li{
   padding: 20px;
 }
 .recovery-modal {
-  background: var(--surface-elevated);
+  /* 콘텐츠 레이어라 유리를 바르지 않는다 — 토큰 블록의 HIG 주석 참고 */
+  background: var(--surface);
   border-radius: var(--radius-sm);
   box-shadow: var(--shadow);
-  backdrop-filter: var(--blur);
   padding: 20px;
   max-width: 420px;
   display: flex; flex-direction: column; gap: 12px;
@@ -441,7 +445,7 @@ li{
   top: 0; left: 0; right: 0; margin: 0;
   height: calc(var(--safe-top) + 48px);
   mask-image: linear-gradient(to top, transparent 0%, black 100%);
-  backdrop-filter: var(--blur);
+  -webkit-backdrop-filter: var(--blur); backdrop-filter: var(--blur);
   pointer-events: none;
 }
 
@@ -665,7 +669,7 @@ li{
 }
 .btn-submit:active { background: var(--accent-press); }
 .btn-cancel {
-  width: 48px; height: 48px; background: var(--surface-elevated); color: var(--on-surface);
+  width: 48px; height: 48px; background: var(--surface-variant); color: var(--on-surface);
   border: none; border-radius: 50%; font-size: 16px; font-weight: 600; cursor: pointer;
 }
 .field-error { font-size: 12px; color: var(--color-danger); margin-top: 4px; }
@@ -695,7 +699,7 @@ li{
   bottom: 0; left: 0; right: 0; margin: 0;
   height: calc(var(--size-nav) + var(--safe-bottom));
   mask-image: linear-gradient(to bottom, transparent 0%, black 100%);
-  backdrop-filter: var(--blur);
+  -webkit-backdrop-filter: var(--blur); backdrop-filter: var(--blur);
 }
 
 /*** 팝업 시트 — 기록 양식 / 설정 ***/

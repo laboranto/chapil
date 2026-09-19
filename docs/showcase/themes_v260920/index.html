@@ -1,0 +1,59 @@
+<!doctype html><meta charset="utf-8"><title>차필 테마 대조 2026-09-20</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { font-family: 'Noto Sans KR', system-ui, sans-serif; margin: 0; padding: 24px;
+         background: #f4f4f5; color: #1b1b1b; }
+  @media (prefers-color-scheme: dark) { body { background: #141618; color: #e2e2e2 } }
+  h1 { font-size: 20px; margin: 0 0 4px }
+  p.note { margin: 0 0 24px; opacity: .7; font-size: 13px; line-height: 1.6 }
+  h2 { font-size: 15px; margin: 28px 0 10px; font-weight: 700 }
+  .row { display: flex; gap: 16px; flex-wrap: wrap }
+  figure { margin: 0 }
+  figcaption { font-size: 12px; margin-top: 6px; opacity: .75; font-variant-numeric: tabular-nums }
+  img { width: 260px; height: auto; border-radius: 8px; display: block;
+        box-shadow: 0 1px 4px rgba(0,0,0,.25) }
+  code { background: rgba(128,128,128,.18); padding: 1px 5px; border-radius: 3px; font-size: .92em }
+  table { border-collapse: collapse; font-size: 13px; margin-top: 8px }
+  td, th { border: 1px solid rgba(128,128,128,.35); padding: 4px 10px; text-align: left }
+</style>
+<h1>차필 — 테마 3종 대조</h1>
+<p class="note">
+  390×844. 실측일 2026-09-20. 브라우저에서 <code>?theme=breeze|material|apple</code>로 지정,
+  <code>?theme=auto</code>로 해제(localStorage에 남는다).
+</p>
+
+<table>
+  <tr><th>테마</th><th>--surface (light / dark)</th><th>--radius-lg</th><th>--blur</th></tr>
+  <tr><td>breeze</td><td>#fcfcfc / #141618</td><td>5px</td><td>blur(4px)</td></tr>
+  <tr><td>material</td><td>#f9f9f9 / #131313</td><td>28px</td><td>blur(6px)</td></tr>
+  <tr><td>apple</td><td>#ffffff / #000000</td><td>26px</td><td>blur(20px) saturate(180%)</td></tr>
+</table>
+
+<h2>홈 — 라이트</h2>
+<div class="row">
+  <figure><img src="breeze-light.png"><figcaption>breeze · #fcfcfc · 5px</figcaption></figure>
+  <figure><img src="material-light.png"><figcaption>material · #f9f9f9 · 28px</figcaption></figure>
+  <figure><img src="apple-light.png"><figcaption>apple · #ffffff · 26px</figcaption></figure>
+</div>
+
+<h2>홈 — 다크</h2>
+<div class="row">
+  <figure><img src="breeze-dark.png"><figcaption>breeze · #141618</figcaption></figure>
+  <figure><img src="material-dark.png"><figcaption>material · #131313</figcaption></figure>
+  <figure><img src="apple-dark.png"><figcaption>apple · #000000</figcaption></figure>
+</div>
+
+<h2>기록 양식 시트 — 라이트</h2>
+<div class="row">
+  <figure><img src="breeze-sheet.png"><figcaption>breeze · 모서리 5px</figcaption></figure>
+  <figure><img src="material-sheet.png"><figcaption>material · 모서리 28px</figcaption></figure>
+  <figure><img src="apple-sheet.png"><figcaption>apple · 모서리 26px</figcaption></figure>
+</div>
+
+<h2>남는 문제</h2>
+<p class="note">
+  라이트에서 apple과 breeze는 <b>모서리 반경 말고는 거의 같아 보인다.</b>
+  apple을 구분짓는 건 Liquid Glass인데, 유리가 닿는 자리가 <code>.topbg</code>(홈에서는
+  렌더되지 않고 시트 안에서는 <code>display:none</code>)와 <code>.bottom-bg</code>(그라데이션 마스크)뿐이라
+  화면에서 거의 안 보인다. 아이콘까지 OS별로 갈아끼우면 차이가 가장 크게 벌어진다.
+</p>
