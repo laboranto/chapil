@@ -25,6 +25,13 @@
 
 /* 구조 토큰 — 테마와 무관하다 */
 :root {
+  /* 차필 시그니처 색. 테마가 바뀌어도 이 파랑은 그대로다.
+     기존 rgba(32,128,225,0.75)에서 알파를 걷은 값 — 흰 배경에 합성하면 대비가
+     2.8:1까지 떨어지던 것이 4.0:1이 된다(AA 4.5:1에는 여전히 못 미침). */
+  --accent: #2080e1;
+  --accent-press: #1969b8;   /* 같은 색상·채도에서 명도만 50%→41% */
+  --on-accent: #ffffff;
+
   --size-nav: 64px;
   --size-layout: 600px;
   --safe-top: env(safe-area-inset-top, 0px);
@@ -37,11 +44,8 @@
   --surface-variant: #eff0f1;
   --surface-fade: rgba(252,252,252,0);
   --surface-elevated: rgba(239,240,241,0.92);
-  --state-hover: rgba(61,174,233,0.12);
-  --state-active: rgba(61,174,233,0.22);
-  --accent: #3daee9;
-  --accent-press: #2a92c9;
-  --on-accent: #ffffff;
+  --state-hover: rgba(32,128,225,0.12);
+  --state-active: rgba(32,128,225,0.22);
   --color-danger: #da4453;
   --color-success: #27ae60;
   --color-warning: #f67400;
@@ -63,11 +67,8 @@
   --surface-variant: #e7e0ec;      /* NeutralVariant90 */
   --surface-fade: rgba(254,247,255,0);
   --surface-elevated: rgba(243,237,247,0.94);  /* surfaceContainer Neutral94 */
-  --state-hover: rgba(103,80,164,0.08);
-  --state-active: rgba(103,80,164,0.12);
-  --accent: #6750a4;               /* Primary40 */
-  --accent-press: #4f378b;
-  --on-accent: #ffffff;
+  --state-hover: rgba(32,128,225,0.08);
+  --state-active: rgba(32,128,225,0.12);
   --color-danger: #b3261e;         /* Error40 */
   --color-success: #2e7d32;        /* M3 baseline에 success 롤이 없어 근사 */
   --color-warning: #825500;
@@ -93,9 +94,6 @@
   --surface-elevated: rgba(255,255,255,0.7);
   --state-hover: rgba(0,0,0,0.04);
   --state-active: rgba(0,0,0,0.08);
-  --accent: #007aff;               /* systemBlue */
-  --accent-press: #0060df;
-  --on-accent: #ffffff;
   --color-danger: #ff3b30;
   --color-success: #34c759;
   --color-warning: #ff9500;
@@ -119,11 +117,8 @@
   --surface-variant: #202326;
   --surface-fade: rgba(20,22,24,0);
   --surface-elevated: rgba(32,35,38,0.92);
-  --state-hover: rgba(61,174,233,0.18);
-  --state-active: rgba(61,174,233,0.3);
-  --accent: #3daee9;               /* Breeze는 강조·상태색이 모드 불문 동일 */
-  --accent-press: #2a92c9;
-  --on-accent: #ffffff;
+  --state-hover: rgba(32,128,225,0.18);
+  --state-active: rgba(32,128,225,0.3);
   --color-danger: #da4453;
   --color-success: #27ae60;
   --color-warning: #f67400;
@@ -144,11 +139,8 @@
   --surface-variant: #36343b;      /* surfaceContainerHighest. NeutralVariant30(#49454f)은 입력 필드엔 밝다 */
   --surface-fade: rgba(20,18,24,0);
   --surface-elevated: rgba(33,31,38,0.96);  /* surfaceContainer Neutral12 */
-  --state-hover: rgba(208,188,255,0.08);
-  --state-active: rgba(208,188,255,0.12);
-  --accent: #d0bcff;               /* Primary80 */
-  --accent-press: #b69df8;
-  --on-accent: #381e72;            /* Primary20 — 밝은 보라 위에 흰 글씨는 안 된다 */
+  --state-hover: rgba(32,128,225,0.16);
+  --state-active: rgba(32,128,225,0.24);
   --color-danger: #f2b8b5;         /* Error80 */
   --color-success: #81c784;
   --color-warning: #e0b44c;
@@ -171,9 +163,6 @@
   --surface-elevated: rgba(30,30,32,0.7);
   --state-hover: rgba(255,255,255,0.06);
   --state-active: rgba(255,255,255,0.12);
-  --accent: #0a84ff;
-  --accent-press: #409cff;
-  --on-accent: #ffffff;
   --color-danger: #ff453a;
   --color-success: #30d158;
   --color-warning: #ff9f0a;
