@@ -9,7 +9,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
-    "icons": "python scripts/extract-emoji.py src/assets/symbols"
+    "icons": "python scripts/build-icons.py src/assets/symbols"
   },
   "dependencies": {
     "@capacitor/filesystem": "^8.0.0",
