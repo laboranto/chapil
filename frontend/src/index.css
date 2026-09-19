@@ -571,7 +571,18 @@ li{
 }
 /* 헤더와 그 밑을 지나는 목록 사이 경계. --shadow는 버튼용(3px)이라 폭 넓은
    헤더에서는 라이트에서 실낱, 다크에서는 검정 위 검정이라 아예 안 보인다. */
-.summary-header.collapsed { border-bottom: var(--outline); }
+/* 축약되면 목록이 이 아래를 지나간다 — 내비게이션 레이어가 되는 순간이다.
+   --surface-elevated는 "--blur와 세트로 쓴다"고 토큰 문서에 적힌 그 값이고,
+   세 테마 모두 여기서 제 규정과 맞아떨어진다:
+     apple    rgba(255,255,255,0.7) + blur(20px) saturate  → iOS 내비 바
+     material rgba(238,238,238,0.94)                       → M3 top app bar(스크롤 시 surfaceContainer)
+     breeze   rgba(239,240,241,0.92)                       → 거의 불투명, 티가 안 난다
+   펼쳐져 있을 때는 페이지와 맞닿아 있어 불투명이 맞으므로 .collapsed에만 건다. */
+.summary-header.collapsed {
+  border-bottom: var(--outline);
+  background: var(--surface-elevated);
+  -webkit-backdrop-filter: var(--blur); backdrop-filter: var(--blur);
+}
 /* 축약: 요약과 제원 줄을 통째로 감추고 차량 이름·설정·필터만 남긴다 */
 .collapsed .identity-block { padding-bottom: 8px; }
 .collapsed .identity-spec { display: none; }
