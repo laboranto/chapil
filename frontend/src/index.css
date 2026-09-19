@@ -596,8 +596,9 @@ li{
 
 /* 카드 배지 */
 /* 배경을 글자색에서 뽑아 쓰면 테마·모드가 바뀌어도 따라온다.
-   (라이트 전용 하드코딩이라 다크에서 연한 배경이 그대로 남던 자리) */
-.badge { background: color-mix(in srgb, currentColor 14%, transparent); color: var(--accent); border-radius: calc(var(--radius-sm) / 5); padding: 1px 7px; font-size: 12px; font-weight: 700; letter-spacing: -0.05em; }
+   (라이트 전용 하드코딩이라 다크에서 연한 배경이 그대로 남던 자리)
+   color-mix는 Safari 16.2+ — iOS 배포 타깃이 15.0이라 앞 선언이 fallback이다. */
+.badge { background: var(--surface-variant); background: color-mix(in srgb, currentColor 14%, transparent); color: var(--accent); border-radius: calc(var(--radius-sm) / 5); padding: 1px 7px; font-size: 12px; font-weight: 700; letter-spacing: -0.05em; }
 .badge.green { color: var(--color-success); }
 .badge.orange { color: var(--color-warning); }
 
@@ -637,16 +638,11 @@ li{
   width: 48px; height: 48px; background: var(--surface-elevated); color: var(--on-surface);
   border: none; border-radius: 50%; font-size: 16px; font-weight: 600; cursor: pointer;
 }
-.field-error { font-size: 12px; color: #e53935; margin-top: 4px; }
+.field-error { font-size: 12px; color: var(--color-danger); margin-top: 4px; }
 .import-actions { display: flex; gap: 8px; margin-top: 12px; }
 .import-actions .btn { flex: 1; }
 
 /*** 요약 배너 (사용 안 함)(deprecated)
-.summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 10px auto; }
-.summary-card { background: var(--surface-variant); border-radius: var(--radius-sm); padding: 14px; box-shadow: 0 1px 3px rgba(0,0,0,.07); }
-.summary-card .label { font-size: 12px; color: var(--on-surface-variant); margin-bottom: 4px; }
-.summary-card .value { font-size: 20px; font-weight: 700; }
-.summary-card .unit { font-size: 13px; color: var(--on-surface-variant); font-weight: 400; }
 ***/
 
 /*** 하단 탭바 ***/

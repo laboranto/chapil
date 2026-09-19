@@ -15,7 +15,7 @@
 - Frontend: React + Vite (SPA)
 - Native App: Capacitor (iOS / Android)
 - Infra: Docker, Docker Compose, Tailscale VPN, Codemagic CI/CD
-- License: LGPL
+- License: LGPL — UI 아이콘은 [Material Design Icons](https://github.com/google/material-design-icons) (Apache-2.0)
 
 ## 디렉터리 구조
 ```
