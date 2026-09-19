@@ -731,12 +731,22 @@ li{
   /* 볼륨은 그라데이션이 아니라 테두리에서 나온다 — button{}의 --shadow를 덮는다 */
   box-shadow: var(--fab-shadow);
   -webkit-backdrop-filter: var(--blur); backdrop-filter: var(--blur);
+  overflow: hidden;            /* 굴절이 모서리 밖으로 새지 않게 */
   font-size: 24px; font-weight: 700; line-height: 1; cursor: pointer;
 }
 /* 배경을 통째로 갈아끼우면 apple의 유리 레이어(그라데이션)가 눌린 순간 사라진다.
    밝기만 낮추면 어느 테마든 쌓아둔 층을 그대로 두고 눌린 느낌만 준다.
    0.82 = --accent(명도 50%) → --accent-press(41%)와 같은 정도. */
 .btn-add:active { filter: brightness(0.82); }
+
+/* 굴절 — glassRefraction.js가 필터를 실제로 만들어 붙였을 때만 켜진다.
+   테마 선택자가 아니라 '기능이 되느냐'로 가르는 자리다. breeze·material은
+   칠이 불투명해서 backdrop이 안 보이므로 이 규칙이 걸려도 달라지는 게 없다.
+   지금 이게 도는 곳은 Chrome/Edge뿐 — WebKit Bug 245510이 열리면 저절로 켜진다. */
+[data-glass="on"] .btn-add {
+  -webkit-backdrop-filter: url(#chapil-glass) var(--blur);
+  backdrop-filter: url(#chapil-glass) var(--blur);
+}
 
 /** 하단 밑바탕(시각 효과용) **/
 .bottom-bg {
