@@ -4,8 +4,10 @@ import { getRecordType } from './recordType'
 
 const fmt = (n) => Number(n).toLocaleString('ko-KR')
 
-// 상세 줄에 이어 붙일 조각들. 좁은 화면에서 뒤가 잘리므로 스캔 가치가 높은
-// 순서로 담는다 — 주행거리·연비가 먼저, 단가·메모가 뒤.
+// 상세 줄에 이어 붙일 조각들.
+// 주유는 한 줄에 다섯 개가 들어가 과밀했다. 리터와 단가를 뺐다 — 연비 배지가
+// 이미 "구간거리 / 리터"를 요약하고, 단가는 금액(윗줄)/리터로 나오는 값이다.
+// 둘 다 수정 화면에 그대로 있다.
 // ⚠️ 통합 목록(UNION)은 11개 컬럼만 내려준다(pagination.js 주석 참고).
 //    type/location/category를 읽으면 전체 탭에서 조용히 undefined가 된다.
 function detailsOf(r, economyUnit) {
@@ -18,8 +20,6 @@ function detailsOf(r, economyUnit) {
     if (badOdometer || suspiciousInterval) out.push(<span className="badge orange">주행거리 오류</span>)
     else if (r.fuel_economy && r.fuel_economy <= 50)
       out.push(<span className="badge green">{r.fuel_economy}&nbsp;{economyUnit}</span>)
-    if (r.liters) out.push(`${parseFloat(r.liters).toLocaleString('ko-KR', { maximumFractionDigits: 3 })}L`)
-    if (r.unit_price) out.push(`@${fmt(r.unit_price)}원/L`)
   }
   if (r.memo) out.push(r.memo)
   return out
