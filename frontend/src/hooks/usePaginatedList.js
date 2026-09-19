@@ -32,10 +32,6 @@ export function usePaginatedList(fetchPage) {
     }
   }, [fetchPage])
 
-  const removeRecord = useCallback((id, src) => {
-    setRecords(prev => prev.filter(r => src ? !(r.id === id && r.src === src) : r.id !== id))
-  }, [])
-
   // 마운트 시 첫 페이지 1회 로드 (StrictMode 이중 실행 방지: didInit 가드)
   // StrictMode의 개발 모드 이중 호출에서는 가드로 중복 방지; 실제 언마운트/리마운트 시 React가 새 컴포넌트 인스턴스를 생성하므로 didInit은 자동 리셋됨.
   useEffect(() => {
@@ -56,5 +52,5 @@ export function usePaginatedList(fetchPage) {
     return () => ob.disconnect()
   }, [loadMore, hasMore])
 
-  return { records, hasMore, loading, sentinelRef, removeRecord }
+  return { records, hasMore, loading, sentinelRef }
 }

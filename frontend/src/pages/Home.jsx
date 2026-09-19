@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { sheetState } from '../sheet'
+import { useRecordsRevision } from '../recordsRevision'
 import { api } from '../api'
 import { useSettings } from '../context/SettingsContext'
 import { useCollapseOnScroll } from '../hooks/useCollapseOnScroll'
@@ -121,10 +122,15 @@ const economyLabel = fuelOption?.economy_label ?? '연비'
   const { collapsed, sentinelRef } = useCollapseOnScroll()
   const tabOptions = ['fuel', 'maintenance', 'other'].map(key => ({ key, ...getRecordType(key, fuelTerm) }))
 
-  // useEffect: 컴포넌트가 처음 화면에 나타날 때 한 번 실행된다.
-  // 두 번째 인자 []는 "의존성 배열"로, 빈 배열이면 마운트 시 딱 한 번만 실행.
-  const loadDashboard = useCallback(() => api.getDashboard().then(setData), [])
-  useEffect(() => { loadDashboard() }, [loadDashboard])
+  // 시트로 띄운 양식에서 기록을 바꾸면 홈은 마운트된 채라 스스로는 모른다.
+  // revision이 올라갈 때마다 요약을 다시 읽고 목록을 새 key로 갈아 끼운다.
+  //
+  // ponytail: key를 바꾸면 목록이 리마운트돼 1페이지부터 다시 받는다. 2페이지
+  // 넘게 펼쳐둔 상태에서 저장하면 스크롤이 한 번 튄다(측정: 4157 → 2999).
+  // 양식이 전체 페이지였을 땐 무조건 맨 위로 갔으니 퇴보는 아니다. 행만
+  // 갈아끼우려면 생성·수정·삭제 배선을 셋으로 쪼개야 해서 v1에서는 안 한다.
+  const revision = useRecordsRevision()
+  useEffect(() => { api.getDashboard().then(setData) }, [revision])
 
   // fmt: 숫자를 천 단위 구분 형식으로 변환한다. (예: 50000 → "50,000")
   const fmt = (n) => Number(n).toLocaleString('ko-KR')
@@ -217,7 +223,7 @@ const economyLabel = fuelOption?.economy_label ?? '연비'
           <SegmentTabs className="records-tabs" options={tabOptions} value={filter} onChange={setFilter} allowDeselect />
         </header>
 
-        <RecordsList key={filter ?? 'all'} filter={filter} />
+        <RecordsList key={`${filter ?? 'all'}-${revision}`} filter={filter} />
       </div>
       {carImageModal}
       <input ref={imgInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFileSelect} />

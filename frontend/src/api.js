@@ -1,4 +1,5 @@
 import { getDB } from './db.js';
+import { bumpRecords } from './recordsRevision';
 import { buildKeysetQuery, buildKeysetUnionQuery, nextCursorFrom, nextUnionCursorFrom, PAGE_SIZE } from './pagination';
 import { Capacitor, registerPlugin } from '@capacitor/core';
 import { Filesystem, Directory } from '@capacitor/filesystem';
@@ -187,6 +188,7 @@ export const api = {
        data.liters ?? null, data.odometer, interval_km, fuel_economy,
        data.location ?? null, data.memo ?? null]
     );
+    bumpRecords();
     return firstRow(await db.query("SELECT * FROM fuel WHERE id=?", [res.changes?.lastId]));
   },
 
@@ -220,12 +222,14 @@ export const api = {
       const nextEconomy = nextInterval > 0 ? calcFuelEconomy(nextInterval, next.liters) : null;
       await db.run("UPDATE fuel SET interval_km=?, fuel_economy=? WHERE id=?", [nextInterval, nextEconomy, next.id]);
     }
+    bumpRecords();
     return firstRow(await db.query("SELECT * FROM fuel WHERE id=?", [id]));
   },
 
   deleteFuel: async (id) => {
     const db = getDB();
     await db.run("DELETE FROM fuel WHERE id=?", [id]);
+    bumpRecords();
     return null;
   },
 
@@ -266,6 +270,7 @@ export const api = {
       [data.date, '정비', data.item, data.amount ?? 0, data.odometer,
        data.location ?? null, data.memo ?? null]
     );
+    bumpRecords();
     return firstRow(await db.query("SELECT * FROM maintenance WHERE id=?", [res.changes?.lastId]));
   },
 
@@ -276,12 +281,14 @@ export const api = {
       [data.date, data.item, data.amount ?? 0, data.odometer,
        data.location ?? null, data.memo ?? null, id]
     );
+    bumpRecords();
     return firstRow(await db.query("SELECT * FROM maintenance WHERE id=?", [id]));
   },
 
   deleteMaintenance: async (id) => {
     const db = getDB();
     await db.run("DELETE FROM maintenance WHERE id=?", [id]);
+    bumpRecords();
     return null;
   },
 
@@ -300,6 +307,7 @@ export const api = {
       [data.date, '기타', data.item, data.amount ?? 0, data.odometer ?? null,
        data.location ?? null, data.memo ?? null]
     );
+    bumpRecords();
     return firstRow(await db.query("SELECT * FROM other WHERE id=?", [res.changes?.lastId]));
   },
 
@@ -310,12 +318,14 @@ export const api = {
       [data.date, data.item, data.amount ?? 0, data.odometer ?? null,
        data.location ?? null, data.memo ?? null, id]
     );
+    bumpRecords();
     return firstRow(await db.query("SELECT * FROM other WHERE id=?", [id]));
   },
 
   deleteOther: async (id) => {
     const db = getDB();
     await db.run("DELETE FROM other WHERE id=?", [id]);
+    bumpRecords();
     return null;
   },
 
@@ -431,6 +441,7 @@ export const api = {
       await db.rollbackTransaction();
       throw e;
     }
+    bumpRecords();
     return {
       imported: {
         fuel:        (data.fuel        ?? []).length,
