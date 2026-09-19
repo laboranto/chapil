@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useLayoutEffect, useRef } from 'react'
 import { useClose } from '../sheet'
 
 // 기록 양식·설정을 배경 위에 덮는 시트. 모바일은 아래에서, 데스크탑은 중앙에서
@@ -10,14 +10,23 @@ export default function Sheet({ children }) {
   const ref = useRef(null)
   const close = useClose()
 
-  useEffect(() => {
+  // useEffect가 아니라 useLayoutEffect다. 페인트가 끝난 뒤에 스크롤을 잠그면
+  // 스크롤바가 사라지며 레이아웃 뷰포트가 그 폭만큼 넓어지는데, 그때 시트는
+  // 이미 옛 폭으로 한 번 그려진 뒤다 — 올라오는 도중에 옆으로 튄다
+  // (실측: .sheet 폭 375.2 → 390.4px). 페인트 전에 끝내야 한 폭으로 시작한다.
+  useLayoutEffect(() => {
     ref.current.showModal()
     // showModal()은 iOS Safari에서 배경 스크롤을 막아주지 않는다.
     // overflow:hidden을 걸면 iOS가 스크롤 위치를 잃으므로 되돌려준다.
     const y = window.scrollY
+    // 스크롤바가 사라진 만큼 배경도 옆으로 밀린다. 그 폭을 패딩으로 상쇄한다.
+    // 겹쳐 뜨는 오버레이 스크롤바(모바일)에서는 0이라 아무 일도 안 한다.
+    const gap = window.innerWidth - document.documentElement.clientWidth
     document.body.style.overflow = 'hidden'
+    if (gap) document.body.style.paddingRight = `${gap}px`
     return () => {
       document.body.style.overflow = ''
+      document.body.style.paddingRight = ''
       window.scrollTo(0, y)
     }
   }, [])
