@@ -727,12 +727,38 @@ li{
    닫힌 시트가 화면에 남으므로 반드시 [open]에만 붙인다.
    UA 기본 max-width/max-height도 풀어야 전체 화면 껍데기가 된다. */
 .sheet-dialog {
+  --sheet-dur: 0.34s;
+  /* 들고 날 때 모두 감속. ease-in-out은 앞이 느려서 누르고 100ms를 화면 밖에서
+     가만히 있다 튀어나오는 것처럼 — ease-in처럼 — 보였다. 더 세게 튀어나오게
+     하려면 cubic-bezier(0.2, 0.9, 0.2, 1)쯤으로 이 한 줄만 바꾸면 된다. */
+  --sheet-curve: ease-out;
   border: none; padding: 0; background: none;
   overflow: hidden;
   width: 100%; max-width: none; height: 100%; max-height: none;
 }
 .sheet-dialog[open] { display: flex; justify-content: center; align-items: flex-end; }
-.sheet-dialog::backdrop { background: rgba(0, 0, 0, 0.4); }
+/* 시트와 같이 깔린다. 안 그러면 누르자마자 배경만 혼자 어두워지고 시트는
+   한 박자 뒤에 온다. */
+.sheet-dialog::backdrop {
+  background: rgba(0, 0, 0, 0.4);
+  animation: backdrop-in var(--sheet-dur, 0.34s) var(--sheet-curve, ease-out);
+}
+@keyframes backdrop-in { from { opacity: 0; } }
+
+/* 나가는 모션. 라우트가 바뀌는 순간 Sheet가 언마운트되므로 CSS만으로는 못 준다 —
+   sheet.js의 useClose가 .closing을 붙이고 애니메이션이 끝난 뒤에 라우트를 돌린다.
+   그 사이 화면에 남아 있어야 하니 forwards로 마지막 프레임을 붙잡는다.
+   아직 올라오는 중에 닫으면 시작점을 지금 자리로 당겨야 위로 한 번 튀지 않는다 —
+   시트는 sheet.js가 인라인 transform으로, 백드롭은 --bd-from으로 박아 넣는다. */
+.sheet-dialog.closing { pointer-events: none; }
+.sheet-dialog.closing .sheet {
+  animation: sheet-down var(--sheet-dur) var(--sheet-curve) forwards;
+}
+.sheet-dialog.closing::backdrop {
+  animation: backdrop-out var(--sheet-dur, 0.34s) var(--sheet-curve, ease-out) forwards;
+}
+@keyframes sheet-down { to { transform: translateY(100%); } }
+@keyframes backdrop-out { from { opacity: var(--bd-from, 1); } to { opacity: 0; } }
 
 .sheet {
   width: 100%; max-width: var(--size-layout); max-height: 92dvh;
@@ -745,7 +771,7 @@ li{
   padding-bottom: var(--safe-bottom);
   /* @starting-style은 Safari 17.5+라 안 쓴다. animation은 요소가 나타날 때
      그냥 돌고, 미지원이어도 "애니메이션만 없고 시트는 뜬다"로 떨어진다. */
-  animation: sheet-up 0.28s ease;
+  animation: sheet-up var(--sheet-dur) var(--sheet-curve);
 }
 @keyframes sheet-up { from { transform: translateY(100%); } }
 
@@ -766,14 +792,21 @@ li{
 .sheet .segment-tabs.form-tabs { margin: 0 auto; top: 80px; }
 
 @media (min-width: 701px) {
+  .sheet-dialog { --sheet-dur: 0.22s; }   /* 제자리 페이드라 슬라이드만큼 길 이유가 없다 */
   .sheet-dialog[open] { align-items: center; }
   .sheet {
     max-height: 86dvh; border: var(--outline); border-radius: var(--radius-lg);
-    animation: sheet-in 0.2s ease;
+    animation: sheet-in var(--sheet-dur) var(--sheet-curve);
   }
   @keyframes sheet-in { from { opacity: 0; transform: scale(0.96); } }
+  /* 위 .closing 규칙의 animation 단축이 이미 지나갔으므로 이름만 갈아끼운다 */
+  .sheet-dialog.closing .sheet { animation-name: sheet-out; }
+  @keyframes sheet-out { to { opacity: 0; transform: scale(0.96); } }
 }
-@media (prefers-reduced-motion: reduce) { .sheet { animation: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .sheet, .sheet-dialog::backdrop,
+  .sheet-dialog.closing .sheet, .sheet-dialog.closing::backdrop { animation: none; }
+}
 
 /*** 세그먼트 탭 (기록 필터 / 양식 전환 공유) ***/
 .segment-tabs {
