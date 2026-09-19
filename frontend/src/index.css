@@ -32,7 +32,7 @@
   --accent-press: #1969b8;   /* 같은 색상·채도에서 명도만 50%→41% */
   --on-accent: #ffffff;
 
-  --size-nav: 64px;
+  --size-nav: 88px;   /* 하단 블러 띠 높이. bottom 24px + 버튼 56px을 덮는다 */
   --size-layout: 600px;
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
@@ -545,16 +545,14 @@ li{
 /* 헤더와 그 밑을 지나는 목록 사이 경계. --shadow는 버튼용(3px)이라 폭 넓은
    헤더에서는 라이트에서 실낱, 다크에서는 검정 위 검정이라 아예 안 보인다. */
 .summary-header.collapsed { border-bottom: var(--outline); }
-/* 축약: 제원 줄과 타일 라벨을 떨구고, 세 타일을 한 줄로 눕힌다 */
+/* 축약: 요약과 제원 줄을 통째로 감추고 차량 이름·설정·필터만 남긴다 */
 .collapsed .identity-block { padding-bottom: 8px; }
 .collapsed .identity-spec { display: none; }
 .collapsed .car-thumb-btn,
 .collapsed .car-thumb,
 .collapsed .car-thumb-btn svg { width: 28px; height: 28px; }
 .collapsed .identity-name { font-size: 15px; }
-.collapsed .summary-tiles { flex-direction: row; }
-.collapsed .summary-tile { flex: 1; justify-content: center; padding: 6px 8px; }
-.collapsed .summary-tile > span:first-child { display: none; }
+.collapsed .summary-tiles { display: none; }
 
 /*** 차량 정체성 블록 ***/
 .identity-block { display: flex; align-items: center; gap: 13px; padding: 4px 2px 16px; }
@@ -567,12 +565,14 @@ li{
 .settings-btn:hover { background: var(--state-hover); }
 .identity-name { font-size: 17px; font-weight: 600; }
 .identity-spec { font-size: 12px; color: var(--on-surface-variant); margin-top: 2px; }
-.summary-tiles { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
+.summary-tiles { display: flex; flex-direction: column; margin-bottom: 8px; }
 .summary-tile {
   display: flex; justify-content: space-between; align-items: baseline;
-  background: var(--surface-variant); border: var(--outline);
-  border-radius: var(--radius-sm); padding: 9px 14px;
+  padding: 6px 2px;   /* .identity-block과 같은 좌우 여백에 맞춘다 */
 }
+/* 면과 테두리를 빼면 바로 밑 필터 버튼과 구별되지만 세 줄이 뭉친다.
+   표처럼 줄 사이 칸막이만 둔다 — 위아래 바깥선은 없다. */
+.summary-tile + .summary-tile { border-top: var(--outline); }
 .summary-tile > span:first-child { font-size: 12px; color: var(--on-surface-variant); }
 .summary-tile b { font-size: 15px; font-weight: 700; }
 .summary-tile > span:last-child { font-size: 11px; color: var(--on-surface-variant); }
@@ -663,7 +663,7 @@ li{
 .btn-add {
   position: fixed; z-index: 200;
   left: 50%; transform: translate(-50%, 0);
-  bottom: 12px; margin-bottom: var(--safe-bottom);
+  bottom: 24px; margin-bottom: var(--safe-bottom);
   width: 56px; height: 56px; border: none; border-radius: 50%;
   background: var(--accent); color: var(--on-accent);
   font-size: 24px; font-weight: 700; line-height: 1; cursor: pointer;
