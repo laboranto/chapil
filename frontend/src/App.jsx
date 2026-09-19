@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { SettingsProvider } from './context/SettingsContext'
 import { useSettings } from './context/SettingsContext'
-import BottomNav from './components/BottomNav'
+import AddButton from './components/AddButton'
 import Onboarding from './pages/Onboarding'
 import Home from './pages/Home'
 import FuelForm from './pages/FuelForm'
@@ -21,9 +21,9 @@ function AppContent() {
   const needsOnboarding = !settings.car_type && !settings.car_birth && !settings.car_fuel
   const isOnboarding = location.pathname === '/onboarding'
   const inOnboardingFlow = isOnboarding || new URLSearchParams(location.search).get('onboarding') === '1'
-  // 하단바에 남은 건 '기록 추가' 액션뿐이라 기록 목록이 있는 메인에서만 띄운다.
+  // 하단에 남은 건 '기록 추가' 버튼뿐이라 기록 목록이 있는 메인에서만 띄운다.
   // 양식·설정 등 하위 페이지는 각자 topbar에 닫기/뒤로가기를 갖고 있다.
-  const showNav = location.pathname === '/'
+  const showAdd = location.pathname === '/'
 
   if (needsOnboarding && !inOnboardingFlow) {
     return <Navigate to="/onboarding" replace />
@@ -44,8 +44,8 @@ function AppContent() {
         <Route path="/import"                       element={<ImportGuide />} />
         <Route path="/feedback"                     element={<Feedback />} />
       </Routes>
-      {showNav && <BottomNav />}
-      {showNav && <div className="bottom-bg"></div>}
+      {showAdd && <AddButton />}
+      {showAdd && <div className="bottom-bg"></div>}
     </>
   )
 }

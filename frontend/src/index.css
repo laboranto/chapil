@@ -540,12 +540,11 @@ li{
   position: sticky; z-index: 95; top: 0;
   padding-top: calc(var(--safe-top) + 8px);
   background: var(--surface);
+  border-bottom: 1px solid transparent;   /* 축약 시 선이 생겨도 안 밀리게 자리를 잡아둔다 */
 }
-.summary-header.collapsed { box-shadow: var(--shadow); }
-.summary-header .identity-block,
-.summary-header .car-thumb-btn,
-.summary-header .car-thumb,
-.summary-header .car-thumb-btn svg { transition: width .15s ease, height .15s ease, padding .15s ease; }
+/* 헤더와 그 밑을 지나는 목록 사이 경계. --shadow는 버튼용(3px)이라 폭 넓은
+   헤더에서는 라이트에서 실낱, 다크에서는 검정 위 검정이라 아예 안 보인다. */
+.summary-header.collapsed { border-bottom: var(--outline); }
 /* 축약: 제원 줄과 타일 라벨을 떨구고, 세 타일을 한 줄로 눕힌다 */
 .collapsed .identity-block { padding-bottom: 8px; }
 .collapsed .identity-spec { display: none; }
@@ -660,18 +659,12 @@ li{
 /*** 요약 배너 (사용 안 함)(deprecated)
 ***/
 
-/*** 하단 탭바 ***/
-.bottom-nav {
-  position: fixed; display: flex; z-index: 200;
+/*** 하단 기록 추가 버튼 (탭바를 대신한다) ***/
+.btn-add {
+  position: fixed; z-index: 200;
   left: 50%; transform: translate(-50%, 0);
   bottom: 12px; margin-bottom: var(--safe-bottom);
-  padding: 8px;   /* 48px 버튼 + 8px*2 = --size-nav(64px). .bottom-bg 높이와 맞물린다 */
-  border: var(--outline); border-radius: var(--radius-lg);
-  background: var(--surface-elevated); box-shadow: var(--shadow);
-  backdrop-filter: var(--blur);
-}
-.btn-add {
-  width: 48px; height: 48px; border: none; border-radius: 50%;
+  width: 56px; height: 56px; border: none; border-radius: 50%;
   background: var(--accent); color: var(--on-accent);
   font-size: 24px; font-weight: 700; line-height: 1; cursor: pointer;
 }
