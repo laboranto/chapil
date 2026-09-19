@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useClose } from '../sheet'
 import { useSettings } from '../context/SettingsContext'
 import SegmentTabs from '../components/SegmentTabs'
 import FuelForm from './FuelForm'
@@ -10,7 +10,7 @@ import { getRecordType } from '../components/records/recordType'
 const FORM = { fuel: FuelForm, maintenance: MaintenanceForm, other: OtherForm }
 
 export default function RecordForm() {
-  const navigate = useNavigate()
+  const close = useClose()
   const { fuelTerm } = useSettings()
   const [tab, setTab] = useState('fuel')
   const formRef = useRef(null)
@@ -28,7 +28,7 @@ export default function RecordForm() {
   return (
     <div>
       <div className="topbar">
-        <button type="button" className="btn-cancel" aria-label="취소" onClick={() => navigate('/')}>✕</button>
+        <button type="button" className="btn-cancel" aria-label="취소" onClick={close}>✕</button>
         <button type="submit" form="record-form" className="btn-submit" aria-label="저장"></button>
       </div>
       <div className="topbg"></div>

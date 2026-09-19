@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useClose } from '../sheet'
 
 // 기록 양식·설정을 배경 위에 덮는 시트. 모바일은 아래에서, 데스크탑은 중앙에서
 // 뜬다(모양은 전부 index.css의 .sheet-dialog / .sheet).
@@ -8,7 +8,7 @@ import { useNavigate } from 'react-router-dom'
 // URL은 그대로라 주소와 화면이 어긋난다.
 export default function Sheet({ children }) {
   const ref = useRef(null)
-  const navigate = useNavigate()
+  const close = useClose()
 
   useEffect(() => {
     ref.current.showModal()
@@ -22,15 +22,15 @@ export default function Sheet({ children }) {
     }
   }, [])
 
-  const close = (e) => { e.preventDefault(); navigate(-1) }
+  const dismiss = (e) => { e.preventDefault(); close() }
 
   return (
     <dialog
       ref={ref}
       className="sheet-dialog"
-      onCancel={close}
+      onCancel={dismiss}
       /* target이 dialog 자신이면 백드롭을 누른 것이다. 안쪽 .sheet를 누르면 다르다. */
-      onClick={(e) => { if (e.target === ref.current) close(e) }}
+      onClick={(e) => { if (e.target === ref.current) dismiss(e) }}
     >
       <div className="sheet">{children}</div>
     </dialog>

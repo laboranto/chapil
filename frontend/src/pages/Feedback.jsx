@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useClose } from '../sheet'
 import { getLogs, getDeviceInfo } from '../logger.js'
 
 // 피드백만은 각자의 서버가 아니라 개발자 서버로 모여야 하므로 절대 URL을 쓴다.
@@ -20,7 +20,7 @@ async function submitFeedback(payload) {
 }
 
 export default function Feedback() {
-  const navigate = useNavigate()
+  const close = useClose('/settings')
   const [text, setText] = useState('')
   const [status, setStatus] = useState('idle') // idle | sending | done | error
 
@@ -49,7 +49,7 @@ export default function Feedback() {
   return (
     <>
       <div className="topbar">
-        <button type="button" className="btn-cancel" aria-label="취소" onClick={() => navigate('/settings')}>✕</button>
+        <button type="button" className="btn-cancel" aria-label="취소" onClick={close}>✕</button>
         <h1>피드백</h1>
       </div>
       <div className="topbg"></div>
@@ -57,7 +57,7 @@ export default function Feedback() {
         {status === 'done' ? (
           <div className="feedback-done">
             <p>소중한 의견 감사합니다!</p>
-            <button className="btn" onClick={() => navigate('/settings')}>돌아가기</button>
+            <button className="btn" onClick={close}>돌아가기</button>
           </div>
         ) : (
           <>

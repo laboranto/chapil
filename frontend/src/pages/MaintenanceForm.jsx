@@ -1,5 +1,6 @@
 import { useState, useEffect, forwardRef, useImperativeHandle } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
+import { useClose } from '../sheet'
 import { api } from '../api'
 import DeleteRecord from '../components/records/DeleteRecord'
 
@@ -10,7 +11,7 @@ const BLANK = {
 
 const MaintenanceForm = forwardRef(function MaintenanceForm({ mode = 'standalone' }, ref) {
   const { id } = useParams()
-  const navigate = useNavigate()
+  const close = useClose()
   const isEdit = Boolean(id)
 
   const [items, setItems] = useState([])
@@ -60,7 +61,7 @@ const MaintenanceForm = forwardRef(function MaintenanceForm({ mode = 'standalone
     }
     if (isEdit) await api.updateMaintenance(id, body)
     else        await api.createMaintenance(body)
-    navigate('/')
+    close()
   }
 
   useImperativeHandle(ref, () => ({
@@ -74,7 +75,7 @@ const MaintenanceForm = forwardRef(function MaintenanceForm({ mode = 'standalone
       {mode === 'standalone' && (
         <>
           <div className="topbar">
-            <button type="button" className="btn-cancel" aria-label="취소" onClick={() => navigate('/')}>✕</button>
+            <button type="button" className="btn-cancel" aria-label="취소" onClick={close}>✕</button>
             <button type="submit" className="btn-submit" aria-label="저장"></button>
           </div>
           <div className="topbg"></div>

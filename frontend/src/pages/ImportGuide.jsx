@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useClose } from '../sheet'
 import { api } from '../api'
 import { useSettings } from '../context/SettingsContext'
 // 버튼 아이콘(심볼) svg 이식
@@ -7,7 +7,7 @@ import ImportIcon from '../assets/symbols/import.svg?react'
 import CopyIcon from '../assets/symbols/copy.svg?react'
 
 export default function ImportGuide() {
-  const navigate = useNavigate()
+  const close = useClose('/settings')
   const [promptCopied, setPromptCopied] = useState(false)
   // previewData: { counts, records, vehicle, errors } — API /import/preview 응답
   const [previewData, setPreviewData] = useState(null)
@@ -106,7 +106,7 @@ const copyPrompt = async () => {
   return (
     <>
       <div className="topbar">
-        <button className="btn-back" onClick={() => navigate('/settings')}>‹</button>
+        <button className="btn-back" onClick={close}>‹</button>
         <h1>데이터 가져오기</h1>
       </div>
       <div className="topbg"></div>

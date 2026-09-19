@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useClose } from '../sheet'
 import { api } from '../api'
 import { useSettings } from '../context/SettingsContext'
 import { VERSION } from '../version.js'
@@ -27,6 +28,7 @@ const FUEL_LABELS = {
 
 export default function Settings() {
   const navigate = useNavigate()
+  const close = useClose()
   const [searchParams] = useSearchParams()
   const isOnboarding = searchParams.get('onboarding') === '1'
   const { refreshSettings, fuelTerm } = useSettings()
@@ -89,7 +91,8 @@ export default function Settings() {
       car_fuel: form.car_fuel || null,
     })
     await refreshSettings()
-    navigate('/')
+    // 온보딩에서 왔으면 pop이 온보딩으로 되돌아간다 — 그때만 홈으로 보낸다
+    isOnboarding ? navigate('/') : close()
   }
 
   const handleExport = async () => {
@@ -222,7 +225,7 @@ export default function Settings() {
       )}
       <div className="topbar">
         {!isOnboarding
-          ? <button type="button" className="btn-cancel" aria-label="취소" onClick={() => navigate('/')}>✕</button>
+          ? <button type="button" className="btn-cancel" aria-label="취소" onClick={close}>✕</button>
           : <span />
         }
         <h1>설정</h1>
