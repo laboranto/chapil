@@ -682,6 +682,55 @@ li{
   backdrop-filter: var(--blur);
 }
 
+/*** 팝업 시트 — 기록 양식 / 설정 ***/
+/* dialog는 UA가 :not([open])에 display:none을 건다. display를 조건 없이 쓰면
+   닫힌 시트가 화면에 남으므로 반드시 [open]에만 붙인다.
+   UA 기본 max-width/max-height도 풀어야 전체 화면 껍데기가 된다. */
+.sheet-dialog {
+  border: none; padding: 0; background: none;
+  width: 100%; max-width: none; height: 100%; max-height: none;
+}
+.sheet-dialog[open] { display: flex; justify-content: center; align-items: flex-end; }
+.sheet-dialog::backdrop { background: rgba(0, 0, 0, 0.4); }
+
+.sheet {
+  width: 100%; max-width: var(--size-layout); max-height: 92dvh;
+  overflow-y: auto; overscroll-behavior: contain;
+  background: var(--surface); color: var(--on-surface);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  padding-bottom: var(--safe-bottom);
+  /* @starting-style은 Safari 17.5+라 안 쓴다. animation은 요소가 나타날 때
+     그냥 돌고, 미지원이어도 "애니메이션만 없고 시트는 뜬다"로 떨어진다. */
+  animation: sheet-up 0.28s ease;
+}
+@keyframes sheet-up { from { transform: translateY(100%); } }
+
+/* 시트 안 페이지 크롬 — 뷰포트 고정을 전제로 쓰인 규칙들을 상자 안 흐름으로 되돌린다.
+   딥링크·미지원 브라우저용 전체 페이지 렌더가 남아 있으므로 원래 규칙은 못 건드린다. */
+.sheet .topbar {
+  position: sticky; top: 0; left: auto; transform: none;
+  width: auto; max-width: none;
+  padding-top: 16px;                 /* safe-top은 시트 위가 아니라 화면 위 얘기다 */
+}
+.sheet .topbg { display: none; }     /* 시트 안엔 비쳐 보일 배경이 없다 */
+.sheet .content {
+  padding-top: 8px;
+  padding-bottom: 24px;              /* 하단 버튼이 없으니 80px을 비울 이유가 없다 */
+}
+/* .segment-tabs.form-tabs와 특이도가 같으면 뒤에 오는 그쪽이 이긴다 — 한 단 올린다.
+   80px = 흐름에 들어온 .topbar 높이(패딩 16+16 + 버튼 48) */
+.sheet .segment-tabs.form-tabs { margin: 0 auto; top: 80px; }
+
+@media (min-width: 701px) {
+  .sheet-dialog[open] { align-items: center; }
+  .sheet {
+    max-height: 86dvh; border-radius: var(--radius-lg);
+    animation: sheet-in 0.2s ease;
+  }
+  @keyframes sheet-in { from { opacity: 0; transform: scale(0.96); } }
+}
+@media (prefers-reduced-motion: reduce) { .sheet { animation: none; } }
+
 /*** 세그먼트 탭 (기록 필터 / 양식 전환 공유) ***/
 .segment-tabs {
   display: flex; gap: 4px; padding: 6px;

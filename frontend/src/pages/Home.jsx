@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
+import { sheetState } from '../sheet'
 import { api } from '../api'
 import { useSettings } from '../context/SettingsContext'
 import { useCollapseOnScroll } from '../hooks/useCollapseOnScroll'
@@ -115,6 +116,7 @@ const carFuelLabel = fuelOption?.label        ?? ''
 const economyUnit  = fuelOption?.economy_unit  ?? 'km/L'
 const economyLabel = fuelOption?.economy_label ?? '연비'
 
+  const location = useLocation()
   const [filter, setFilter] = useState(null)
   const { collapsed, sentinelRef } = useCollapseOnScroll()
   const tabOptions = ['fuel', 'maintenance', 'other'].map(key => ({ key, ...getRecordType(key, fuelTerm) }))
@@ -195,7 +197,7 @@ const economyLabel = fuelOption?.economy_label ?? '연비'
           {[settings.car_plate, settings.car_birth?.slice(0, 4), carTypeLabel, carFuelLabel].filter(Boolean).join(' · ')}
         </div>
       </div>
-      <Link to="/settings" className="settings-btn" aria-label="설정"><SettingsIcon /></Link>
+      <Link to="/settings" state={sheetState(location)} className="settings-btn" aria-label="설정"><SettingsIcon /></Link>
     </div>
   )
 

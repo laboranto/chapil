@@ -1,5 +1,6 @@
 import { Fragment, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
+import { sheetState } from '../../sheet'
 import { api } from '../../api'
 import { usePaginatedList } from '../../hooks/usePaginatedList'
 import RecordCard from './RecordCard'
@@ -14,6 +15,7 @@ const monthOf = (date) => date.slice(0, 7)
 
 export default function RecordsList({ filter }) {
   const navigate = useNavigate()
+  const location = useLocation()
   const fetchPage = useCallback(
     ({ cursor }) => api.getRecordsPage({ cursor, filter }),
     [filter]
@@ -34,7 +36,7 @@ export default function RecordsList({ filter }) {
               {r.date.slice(0, 4)}년 {Number(r.date.slice(5, 7))}월
             </div>
           )}
-          <RecordCard record={r} onOpen={() => navigate(EDIT_PATH[r.src](r.id))} />
+          <RecordCard record={r} onOpen={() => navigate(EDIT_PATH[r.src](r.id), { state: sheetState(location) })} />
         </Fragment>
       ))}
       {hasMore && <div ref={sentinelRef} style={{ height: 1 }} />}
