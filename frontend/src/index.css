@@ -614,8 +614,10 @@ li{
 /* 카드 배지 */
 /* 배경을 글자색에서 뽑아 쓰면 테마·모드가 바뀌어도 따라온다.
    (라이트 전용 하드코딩이라 다크에서 연한 배경이 그대로 남던 자리)
-   .green/.orange가 color 하나만 바꿔도 배경이 같이 따라오는 것도 이 덕이다. */
-.badge { background: color-mix(in srgb, currentColor 14%, transparent); color: var(--accent); border-radius: calc(var(--radius-sm) / 5); padding: 1px 7px; font-size: 12px; font-weight: 700; letter-spacing: -0.05em; }
+   .green/.orange가 color 하나만 바꿔도 배경이 같이 따라오는 것도 이 덕이다.
+   color-mix는 Safari 16.2+. 배포 타깃(18.0)은 네이티브 앱 얘기고 이 앱의 현재
+   설치 경로는 웹이라(README의 공개 데모·셀프호스팅) 앞 선언을 fallback으로 남긴다. */
+.badge { background: var(--surface-variant); background: color-mix(in srgb, currentColor 14%, transparent); color: var(--accent); border-radius: calc(var(--radius-sm) / 5); padding: 1px 7px; font-size: 12px; font-weight: 700; letter-spacing: -0.05em; }
 .badge.green { color: var(--color-success); }
 .badge.orange { color: var(--color-warning); }
 
