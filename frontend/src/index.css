@@ -228,6 +228,10 @@ html, .sheet {
 }
 
 body {
+  /* 시트가 열릴 때 Sheet.jsx가 스크롤바 폭만큼 padding-right를 넣는데, 전역
+     * 규칙(transition-property 기본값 all)이 그걸 잡아 배경이 220ms 동안
+     옆으로 미끄러졌다. body가 전이할 건 테마 전환 시의 색뿐이다. */
+  transition-property: background-color, color;
   font-family: -apple-system, BlinkMacSystemFont, 'Noto Sans CJK KR', 'Noto Sans KR', 'Segoe UI', sans-serif;
   min-height: 100vh; background: var(--surface); color: var(--on-surface); 
 }
@@ -749,6 +753,7 @@ li{
    UA 기본 max-width/max-height도 풀어야 전체 화면 껍데기가 된다. */
 .sheet-dialog {
   border: none; padding: 0; background: none;
+  overflow: hidden;
   width: 100%; max-width: none; height: 100%; max-height: none;
 }
 .sheet-dialog[open] { display: flex; justify-content: center; align-items: flex-end; }
