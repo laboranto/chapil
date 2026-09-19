@@ -62,20 +62,25 @@
 }
 
 /* ── Material 3 (Android) ── */
+/* M3 baseline 팔레트는 시드가 보라(#6750A4)라 중성색까지 보라로 기운다
+   (Neutral98 = #fef7ff → R254 G247 B255). 차필의 시그니처는 파랑(#2080e1)이고
+   --state-hover도 그 파랑이라, 라벤더 면 위에 파란 하이라이트가 얹혀 색이
+   틀어져 보인다. 그래서 중성색만 채도 0으로 내린다 — 톤(=L*)은 baseline과
+   같은 값을 쓰므로 대비비는 그대로다. */
 [data-theme="material"] {
-  --surface: #fef7ff;              /* Neutral98 */
-  --surface-variant: #e7e0ec;      /* NeutralVariant90 */
-  --surface-fade: rgba(254,247,255,0);
-  --surface-elevated: rgba(243,237,247,0.94);  /* surfaceContainer Neutral94 */
+  --surface: #f9f9f9;              /* tone 98, 채도 0 */
+  --surface-variant: #e2e2e2;      /* tone 90 */
+  --surface-fade: rgba(249,249,249,0);
+  --surface-elevated: rgba(238,238,238,0.94);  /* surfaceContainer tone 94 */
   --state-hover: rgba(32,128,225,0.08);
   --state-active: rgba(32,128,225,0.12);
   --color-danger: #b3261e;         /* Error40 */
   --color-success: #2e7d32;        /* M3 baseline에 success 롤이 없어 근사 */
   --color-warning: #825500;
-  --on-surface: #1d1b20;           /* Neutral10 */
-  --on-surface-variant: #49454f;   /* NeutralVariant30 */
-  --outline: 1px solid #cac4d0;    /* outlineVariant */
-  --outline-strong: 1px solid #79747e;  /* outline */
+  --on-surface: #1b1b1b;           /* tone 10 */
+  --on-surface-variant: #474747;   /* tone 30 */
+  --outline: 1px solid #c6c6c6;    /* outlineVariant tone 80 */
+  --outline-strong: 1px solid #777777;  /* outline tone 50 */
   --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 1px 3px 1px rgba(0,0,0,0.15);
   --shadow-hover: 0 1px 2px rgba(0,0,0,0.3), 0 2px 6px 2px rgba(0,0,0,0.15);
   --shadow-active: 0 1px 2px rgba(0,0,0,0.3), 0 1px 3px rgba(0,0,0,0.15);
@@ -135,19 +140,19 @@
 }
 
 [data-theme="material"] {
-  --surface: #141218;              /* Neutral6 */
-  --surface-variant: #36343b;      /* surfaceContainerHighest. NeutralVariant30(#49454f)은 입력 필드엔 밝다 */
-  --surface-fade: rgba(20,18,24,0);
-  --surface-elevated: rgba(33,31,38,0.96);  /* surfaceContainer Neutral12 */
+  --surface: #131313;              /* tone 6, 채도 0 (위 라이트 블록 주석 참고) */
+  --surface-variant: #353535;      /* surfaceContainerHighest tone 22. tone 30은 입력 필드엔 밝다 */
+  --surface-fade: rgba(19,19,19,0);
+  --surface-elevated: rgba(31,31,31,0.96);  /* surfaceContainer tone 12 */
   --state-hover: rgba(32,128,225,0.16);
   --state-active: rgba(32,128,225,0.24);
   --color-danger: #f2b8b5;         /* Error80 */
   --color-success: #81c784;
   --color-warning: #e0b44c;
-  --on-surface: #e6e0e9;           /* Neutral90 */
-  --on-surface-variant: #cac4d0;   /* NeutralVariant80 */
-  --outline: 1px solid #49454f;    /* outlineVariant */
-  --outline-strong: 1px solid #938f99;  /* outline */
+  --on-surface: #e2e2e2;           /* tone 90 */
+  --on-surface-variant: #c6c6c6;   /* tone 80 */
+  --outline: 1px solid #474747;    /* outlineVariant tone 30 */
+  --outline-strong: 1px solid #919191;  /* outline tone 60 */
   --shadow: 0 1px 2px rgba(0,0,0,0.5), 0 1px 3px 1px rgba(0,0,0,0.3);
   --shadow-hover: 0 1px 2px rgba(0,0,0,0.5), 0 2px 6px 2px rgba(0,0,0,0.3);
   --shadow-active: 0 1px 2px rgba(0,0,0,0.5), 0 1px 3px rgba(0,0,0,0.3);
@@ -185,6 +190,17 @@
    보정값이 스크롤량보다 커서 0으로 클램프되고, 그러면 축약이 곧바로 풀린다.
    Safari에는 앵커링 자체가 없어 이 선언이 무시돼도 동작은 같다. */
 html { overflow-anchor: none; }
+
+/* 스크롤바 — 데스크탑 전용 얘기다. iOS/Android는 원래 겹쳐 뜨고 곧 사라진다.
+   뷰포트 스크롤바는 body가 아니라 루트에서 전파되므로 html에 건다. html에는
+   color가 없어 currentColor가 검정으로 떨어지니 토큰을 직접 쓴다.
+   Chrome은 scrollbar-width가 있으면 ::-webkit-scrollbar를 무시한다 — 안 쓴다.
+   ponytail: 자동으로 숨는 오버레이 스크롤바는 CSS로 못 만든다. 필요해지면 JS. */
+html, .sheet {
+  scrollbar-width: thin;
+  scrollbar-color: var(--on-surface-variant) transparent;
+  scrollbar-color: color-mix(in srgb, var(--on-surface-variant) 35%, transparent) transparent;
+}
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Noto Sans CJK KR', 'Noto Sans KR', 'Segoe UI', sans-serif;
