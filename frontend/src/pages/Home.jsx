@@ -129,7 +129,12 @@ const economyLabel = fuelOption?.economy_label ?? '연비'
   // 양식이 전체 페이지였을 땐 무조건 맨 위로 갔으니 퇴보는 아니다. 행만
   // 갈아끼우려면 생성·수정·삭제 배선을 셋으로 쪼개야 해서 v1에서는 안 한다.
   const revision = useSyncExternalStore(subscribe, getRevision)
-  useEffect(() => { api.getDashboard().then(setData) }, [revision])
+  useEffect(() => {
+    // bump가 연달아 나면 요청이 겹친다. 늦게 도착한 옛 응답이 새 값을 덮지 않게 막는다.
+    let alive = true
+    api.getDashboard().then(d => { if (alive) setData(d) })
+    return () => { alive = false }
+  }, [revision])
 
   // fmt: 숫자를 천 단위 구분 형식으로 변환한다. (예: 50000 → "50,000")
   const fmt = (n) => Number(n).toLocaleString('ko-KR')

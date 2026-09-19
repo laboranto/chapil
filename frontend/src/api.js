@@ -141,8 +141,6 @@ export const api = {
       " AND odometer > 0 AND (interval_km IS NULL OR interval_km < odometer * 0.95)", []
     ));
 
-    const recent = await api.getRecentRecords();
-
     const odomRow = firstRow(await db.query(`
       SELECT odometer FROM (
         SELECT date, odometer FROM fuel       WHERE odometer IS NOT NULL
@@ -154,7 +152,6 @@ export const api = {
     `, []));
 
     return {
-      recent,
       cost_last_30d:    fuel30d + maint30d + other30d,
       avg_economy:      avgRow?.avg ? Math.round(avgRow.avg * 100) / 100 : null,
       latest_odometer:  odomRow?.odometer ?? null,
@@ -247,12 +244,6 @@ export const api = {
     const { sql, params } = buildKeysetUnionQuery(cursor, limit)
     const rs = rows(await db.query(sql, params))
     return { rows: rs, nextCursor: nextUnionCursorFrom(rs, limit) }
-  },
-
-  getRecentRecords: async () => {
-    const db = getDB()
-    const { sql, params } = buildKeysetUnionQuery(null, 10)
-    return rows(await db.query(sql, params))
   },
 
   // ── 정비 ────────────────────────────────────────────────────────────

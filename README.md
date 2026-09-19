@@ -6,7 +6,15 @@
 # [> 차필 데모버전 <](http://chapil-demo.varmakoro.net/)
 
 ## 스크린샷
-<img src="docs/showcase/screenshot_v260428a.jpg" alt="8개의 스크린샷이 4열 2행으로 나열되어 있다. 윗줄은 라이트모드, 아랫줄은 다크모드 테마가 적용된 모습. 왼쪽부터 차례로 홈, 주유 기록, 주유 기록 양식, 설정 화면이다." width="800">
+<img src="docs/showcase/v260920/screenshot_v260920.png" alt="8개의 스크린샷이 4열 2행으로 나열되어 있다. 윗줄은 라이트모드, 아랫줄은 다크모드. 왼쪽부터 차례로 홈, 스크롤해서 요약이 축약된 목록, 아래에서 올라온 기록 양식 팝업, 설정 팝업이다." width="800">
+
+### OS에 맞춰 테마가 바뀝니다
+접속한 기기를 보고 테마를 입힙니다. 색·모서리·그림자·블러는 물론 아이콘까지 함께 바뀌며, 레이아웃은 한 가지로 고정입니다.
+
+<img src="docs/showcase/v260920/themes_v260920.png" alt="같은 홈 화면이 세 가지 테마로 나란히 놓여 있다. 왼쪽부터 각진 모서리의 Breeze, 크게 둥근 모서리의 Material 3, 그 중간쯤 둥근 Apple 테마이며 아이콘 모양도 각각 다르다." width="800">
+
+### 이전 버전과 비교
+<img src="docs/showcase/v260920/compare_v260920.png" alt="네 가지 화면을 이전 버전과 지금 버전으로 짝지어 8칸에 나열한 비교표. 홈, 목록, 기록 양식, 설정 순서이며 각 짝의 왼쪽이 이전, 오른쪽이 지금이다." width="800">
 
 ## 기술 스택
 - Architecture: 로컬 우선(local-first) — 기록은 기기 내 SQLite에 저장
@@ -15,7 +23,8 @@
 - Frontend: React + Vite (SPA)
 - Native App: Capacitor (iOS / Android)
 - Infra: Docker, Docker Compose, Tailscale VPN, Codemagic CI/CD
-- License: LGPL — UI 아이콘은 [Material Design Icons](https://github.com/google/material-design-icons) (Apache-2.0)
+- Theme: OS 판별 후 Material 3 / Apple / KDE Breeze 토큰 세트를 적용 (`docs/tokens/`에서 3종 비교 가능)
+- License: LGPL — UI 아이콘은 테마별로 [Material Design Icons](https://github.com/google/material-design-icons)(Apache-2.0), [KDE Breeze](https://invent.kde.org/frameworks/breeze-icons)(LGPL-3.0+), [Lucide](https://github.com/lucide-icons/lucide)(ISC)를 씁니다. 출처별 고지는 `frontend/src/assets/symbols/NOTICE.md`
 
 ## 디렉터리 구조
 ```
@@ -29,17 +38,23 @@ chapil/
 │   ├── src/
 │   │   ├── db.js             # SQLite WASM(OPFS) 초기화 및 스키마
 │   │   ├── pages/            # 페이지 컴포넌트
-│   │   ├── components/       # 공용 컴포넌트
+│   │   ├── components/       # 공용 컴포넌트 (Sheet.jsx = 팝업 껍데기)
 │   │   ├── context/          # React Context
 │   │   ├── hooks/            # 커스텀 훅
-│   │   ├── assets/           # 폰트, 아이콘 등
-│   │   ├── App.jsx           # 라우팅
+│   │   ├── assets/symbols/   # 테마별 아이콘 (material/ breeze/ apple/ + NOTICE.md)
+│   │   ├── App.jsx           # 라우팅 (배경 위에 시트를 겹치는 분기 포함)
+│   │   ├── theme.js          # OS 판별 → data-theme. ?theme= 로 수동 지정 가능
+│   │   ├── sheet.js          # 시트로 띄울지 판정 + 닫기(useClose)
+│   │   ├── recordsRevision.js # 기록이 바뀌면 배경 목록·요약을 다시 읽게 하는 신호
 │   │   ├── api.js            # 백엔드 API 호출 (백업/피드백)
-│   │   └── index.css         # 전역 스타일
+│   │   └── index.css         # 전역 스타일 + 디자인 토큰 6블록
+│   ├── scripts/
+│   │   └── build-icons.py    # 세 출처의 SVG를 currentColor 심볼로 정규화
 │   └── public/               # PWA manifest, 아이콘
 ├── docs/
-│   └── tokens/               # 디자인 토큰 참조 페이지 (index.css를 읽어 테마 3종 비교)
-│       └── index.html
+│   ├── tokens/index.html     # 디자인 토큰 참조 페이지 (index.css를 읽어 테마 3종 비교)
+│   ├── client/               # 개편 기획·설계 문서
+│   └── showcase/             # 스크린샷과 목업
 ├── android/                  # Capacitor Android 프로젝트
 ├── ios/                      # Capacitor iOS 프로젝트
 ├── assets/                   # 앱 아이콘 및 스플래시 이미지 원본
@@ -104,6 +119,23 @@ docker compose up -d --build
 - 애플 앱스토어 출시도 준비하고 있습니다.
 
 # 업데이트 내역
+### v26.9.20
+##### 화면 구성 개편
+- 홈과 기록 페이지를 하나로 합쳤습니다. 요약은 맨 위에 고정되고, 스크롤하면 줄어들면서 차량 이름과 필터만 남습니다.
+- 하단 탭 바를 없앴습니다. 그 자리에는 '기록 추가' 버튼 하나만 가운데에 뜹니다.
+- 기록 목록을 월 단위로 묶고 행 높이를 일정하게 맞췄습니다. 각 행 오른쪽의 '⋯' 메뉴는 없앴으며, 삭제는 수정 화면 아래로 옮겼습니다.
+##### 팝업으로 열리는 기록 양식과 설정
+- 기록 양식과 설정이 전체 페이지 대신 팝업으로 뜹니다. 모바일에서는 아래에서 올라오고, 데스크탑에서는 화면 한가운데에 뜹니다. 뒤 화면은 그대로 남아 있어 어디에서 눌렀는지 잊지 않습니다.
+- 팝업에서 기록을 추가·수정·삭제하면 뒤에 있는 목록과 요약이 곧바로 따라 바뀝니다.
+- 주소를 직접 입력하거나 북마크로 들어오면 예전처럼 전체 페이지로 열립니다. 팝업을 지원하지 않는 옛 브라우저도 같은 경로로 떨어지므로 못 쓰는 화면은 없습니다.
+##### OS별 테마
+- 접속한 기기를 보고 테마를 입힙니다. 안드로이드는 Material 3, iPhone·iPad·Mac은 Apple, 그 밖의 데스크탑은 KDE Breeze입니다. 색·모서리·그림자·블러가 함께 바뀌며 레이아웃은 한 가지로 고정입니다.
+- 아이콘도 테마를 따라갑니다. 테마마다 출처가 다르며(Material Design Icons / KDE Breeze / Lucide), Breeze에 없는 주유·충전 아이콘은 같은 문법으로 직접 그렸습니다.
+- 주소 끝에 `?theme=apple`처럼 붙이면 테마를 직접 골라볼 수 있습니다. `?theme=auto`로 되돌립니다.
+##### 그 밖에
+- 다크 모드에서 선택 목록·날짜 선택기 같은 브라우저 기본 위젯이 밝은 색으로 남던 문제를 고쳤습니다. 다크 모드용 파비콘도 연결했습니다.
+- 스크롤바를 얇고 반투명하게 다듬었습니다.
+- 쓰이지 않으면서 빌드마다 1.6MB씩 포함되던 폰트를 뺐고, 홈 요약이 화면에 쓰지도 않는 기록 10건을 매번 조회하던 것을 없앴습니다.
 ### v26.8.6
 ##### 피드백 기능 복구
 - 피드백 전송이 외부 서비스(Nextcloud Forms)에 의존하던 것을 자체 구현으로 교체했습니다. 그동안 해당 서비스 중단으로 피드백이 전송되지 않던 문제가 해결되었습니다.
@@ -175,6 +207,9 @@ docker compose up -d --build
 - 최초 버전
 
 # 이전 버전 스크린샷
+### v26.4.28a
+<img src="docs/showcase/screenshot_v260428a.jpg" alt="8개의 스크린샷이 4열 2행으로 나열되어 있다. 윗줄은 라이트모드, 아랫줄은 다크모드 테마가 적용된 모습. 왼쪽부터 차례로 홈, 주유 기록, 주유 기록 양식, 설정 화면이다." width="800">
+
 ### v26.4.2a
 ![4개의 스크린샷이 가로로 정렬되어 있다. 왼쪽부터 차례로 요약, 주유 기록, 주유 기록 양식, 주유 기록 리스트를 중간쯤 스크롤 했을 때의 화면이다. 하단의 탭 바가 반투명하게 떠있으며 스크롤을 하면 위아래로 뿌옇게 사라지는 효과가 나타난다.](docs/showcase/screenshot_v260402a.webp)
 
