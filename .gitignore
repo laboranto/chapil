@@ -16,3 +16,5 @@ fix_alpha*.py
 android/bugreport*.zip
 *.jks
 *.keystore
+.playwright-mcp/
+
