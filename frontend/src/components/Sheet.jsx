@@ -24,13 +24,19 @@ export default function Sheet({ children }) {
 
   const dismiss = (e) => { e.preventDefault(); close() }
 
+  // 백드롭 판정은 click 하나로는 모자란다. 시트 안 textarea에서 드래그를 시작해
+  // 시트 밖에서 떼면 click의 target이 공통 조상인 <dialog>로 올라가, 입력 중이던
+  // 양식이 확인도 없이 닫힌다. 누른 자리도 백드롭이었을 때만 닫는다.
+  const downOnBackdrop = useRef(false)
+
   return (
     <dialog
       ref={ref}
       className="sheet-dialog"
       onCancel={dismiss}
       /* target이 dialog 자신이면 백드롭을 누른 것이다. 안쪽 .sheet를 누르면 다르다. */
-      onClick={(e) => { if (e.target === ref.current) dismiss(e) }}
+      onPointerDown={(e) => { downOnBackdrop.current = e.target === ref.current }}
+      onClick={(e) => { if (downOnBackdrop.current && e.target === ref.current) dismiss(e) }}
     >
       <div className="sheet">{children}</div>
     </dialog>
