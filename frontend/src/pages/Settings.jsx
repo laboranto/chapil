@@ -4,8 +4,7 @@ import { useClose } from '../sheet'
 import { api } from '../api'
 import { useSettings } from '../context/SettingsContext'
 import { VERSION } from '../version.js'
-import ImportIcon from '../assets/symbols/import.svg?react'
-import ExportIcon from '../assets/symbols/export.svg?react'
+import { ImportIcon, ExportIcon } from '../assets/symbols'
 import RecoveryCodeModal from '../components/RecoveryCodeModal'
 import {
   getOrCreateCode, regenerateCode, deleteBackup, restoreFromCode, pushBackup,

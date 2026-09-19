@@ -1,7 +1,4 @@
-import FuelIcon        from '../../assets/symbols/fuel.svg?react'
-import ChargeIcon      from '../../assets/symbols/charge.svg?react'
-import MaintenanceIcon from '../../assets/symbols/maintenance.svg?react'
-import OtherIcon       from '../../assets/symbols/other.svg?react'
+import { FuelIcon, ChargeIcon, MaintenanceIcon, OtherIcon } from '../../assets/symbols'
 
 export function getRecordType(src, fuelTerm = '주유') {
   if (src === 'fuel')

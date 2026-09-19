@@ -29,6 +29,15 @@
   <tr><td>apple</td><td>#ffffff / #000000</td><td>26px</td><td>blur(20px) saturate(180%)</td></tr>
 </table>
 
+<h2>아이콘</h2>
+<p class="note">
+  테마마다 출처가 다르다 — material은 material-design-icons(Apache-2.0, 면),
+  breeze는 KDE Breeze(LGPL-3.0+, 면), apple은 Lucide(ISC, 선).
+  <b>SF Symbols는 애플 라이선스상 웹 번들에 넣을 수 없다</b>(자세한 건 NOTICE.md).
+  breeze에는 자동차 도메인 아이콘이 없어 <b>주유·충전은 직접 그렸다.</b>
+  → <a href="icons.html">아이콘 27장 대조표</a>
+</p>
+
 <h2>홈 — 라이트</h2>
 <div class="row">
   <figure><img src="breeze-light.png"><figcaption>breeze · #fcfcfc · 5px</figcaption></figure>
@@ -55,5 +64,6 @@
   라이트에서 apple과 breeze는 <b>모서리 반경 말고는 거의 같아 보인다.</b>
   apple을 구분짓는 건 Liquid Glass인데, 유리가 닿는 자리가 <code>.topbg</code>(홈에서는
   렌더되지 않고 시트 안에서는 <code>display:none</code>)와 <code>.bottom-bg</code>(그라데이션 마스크)뿐이라
-  화면에서 거의 안 보인다. 아이콘까지 OS별로 갈아끼우면 차이가 가장 크게 벌어진다.
+  화면에서 거의 안 보인다. 그래서 아이콘을 OS별로 갈아끼웠다 — 지금은 면/면/선으로
+  칠 방식부터 갈려서 라이트에서도 셋이 확실히 구분된다.
 </p>

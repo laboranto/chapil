@@ -3,8 +3,7 @@ import { useClose } from '../sheet'
 import { api } from '../api'
 import { useSettings } from '../context/SettingsContext'
 // 버튼 아이콘(심볼) svg 이식
-import ImportIcon from '../assets/symbols/import.svg?react'
-import CopyIcon from '../assets/symbols/copy.svg?react'
+import { ImportIcon, CopyIcon } from '../assets/symbols'
 
 export default function ImportGuide() {
   const close = useClose('/settings')
