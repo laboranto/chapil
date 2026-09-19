@@ -1,6 +1,7 @@
 import { useState, useEffect, forwardRef, useImperativeHandle } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { api } from '../api'
+import DeleteRecord from '../components/records/DeleteRecord'
 
 const BLANK = {
   date: new Date().toISOString().split('T')[0],
@@ -109,6 +110,8 @@ const OtherForm = forwardRef(function OtherForm({ mode = 'standalone' }, ref) {
           <label>메모</label>
           <textarea value={form.memo} onChange={e => set('memo', e.target.value)} />
         </div>
+
+        {isEdit && <DeleteRecord onDelete={() => api.deleteOther(id)} />}
 
       </div>
     </form>

@@ -215,7 +215,7 @@ const economyLabel = fuelOption?.economy_label ?? '연비'
           <SegmentTabs className="records-tabs" options={tabOptions} value={filter} onChange={setFilter} allowDeselect />
         </header>
 
-        <RecordsList key={filter ?? 'all'} filter={filter} onMutate={loadDashboard} />
+        <RecordsList key={filter ?? 'all'} filter={filter} />
       </div>
       {carImageModal}
       <input ref={imgInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFileSelect} />
