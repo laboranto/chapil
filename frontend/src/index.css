@@ -180,6 +180,12 @@
 
 }
 
+/* 요약 헤더가 축약되면 아래 내용이 109px 위로 올라가는데, 스크롤 앵커링이 그걸
+   "앵커가 움직였다"고 보고 스크롤을 같은 만큼 되돌린다. 40~150px 구간에서는
+   보정값이 스크롤량보다 커서 0으로 클램프되고, 그러면 축약이 곧바로 풀린다.
+   Safari에는 앵커링 자체가 없어 이 선언이 무시돼도 동작은 같다. */
+html { overflow-anchor: none; }
+
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Noto Sans CJK KR', 'Noto Sans KR', 'Segoe UI', sans-serif;
   min-height: 100vh; background: var(--surface); color: var(--on-surface); 
