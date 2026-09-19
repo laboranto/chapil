@@ -57,6 +57,8 @@
   --shadow-active: 0 1px 2px rgba(0,0,0,0.2);
   --radius-sm: 5px;   /* kirigami cornerRadius */
   --radius-lg: 5px;   /* Breeze는 알약 모양을 쓰지 않는다 */
+  --radius-fab: 5px;   /* Breeze는 알약·원을 쓰지 않는다 */
+  --fab-bg: var(--accent);
   --blur: blur(4px);
 }
 
@@ -85,6 +87,8 @@
   --shadow-active: 0 1px 2px rgba(0,0,0,0.3), 0 1px 3px rgba(0,0,0,0.15);
   --radius-sm: 12px;  /* medium */
   --radius-lg: 28px;  /* extra large */
+  --radius-fab: 16px;  /* M3 FAB는 56dp에 shape:large(16dp) — 원이 아니다 */
+  --fab-bg: var(--accent);
   --blur: blur(6px);
 }
 
@@ -110,6 +114,8 @@
   --shadow-active: 0 1px 4px rgba(0,0,0,0.1);
   --radius-sm: 10px;
   --radius-lg: 26px;
+  --radius-fab: 50%;   /* HIG: 떠 있는 기본 액션은 원형 유리 */
+  --fab-bg: linear-gradient(to bottom, rgba(255,255,255,0.28), rgba(255,255,255,0) 55%), rgba(32,128,225,0.92);
   --blur: blur(20px) saturate(180%);
 }
 
@@ -135,6 +141,8 @@
   --shadow-active: 0 1px 2px rgba(0,0,0,0.6);
   --radius-sm: 5px;
   --radius-lg: 5px;
+  --radius-fab: 5px;   /* Breeze는 알약·원을 쓰지 않는다 */
+  --fab-bg: var(--accent);
   --blur: blur(4px);
 }
 
@@ -157,6 +165,8 @@
   --shadow-active: 0 1px 2px rgba(0,0,0,0.5), 0 1px 3px rgba(0,0,0,0.3);
   --radius-sm: 12px;
   --radius-lg: 28px;
+  --radius-fab: 16px;  /* M3 FAB는 56dp에 shape:large(16dp) — 원이 아니다 */
+  --fab-bg: var(--accent);
   --blur: blur(6px);
 }
 
@@ -179,6 +189,8 @@
   --shadow-active: 0 1px 4px rgba(0,0,0,0.55);
   --radius-sm: 10px;
   --radius-lg: 26px;
+  --radius-fab: 50%;
+  --fab-bg: linear-gradient(to bottom, rgba(255,255,255,0.22), rgba(255,255,255,0) 55%), rgba(32,128,225,0.92);
   --blur: blur(20px) saturate(180%);
 }
 
@@ -682,11 +694,18 @@ li{
   position: fixed; z-index: 200;
   left: 50%; transform: translate(-50%, 0);
   bottom: 24px; margin-bottom: var(--safe-bottom);
-  width: 56px; height: 56px; border: none; border-radius: 50%;
-  background: var(--accent); color: var(--on-accent);
+  width: 56px; height: 56px; border: none; border-radius: var(--radius-fab);
+  /* 화면에서 가장 눈에 띄는 요소다. 모양과 칠을 테마 토큰에서 받아야
+     OS별 차이가 실제로 보인다 — breeze는 각진 사각, M3는 16dp 스퀘어클,
+     Apple은 뒤가 비치는 원형 유리. */
+  background: var(--fab-bg); color: var(--on-accent);
+  -webkit-backdrop-filter: var(--blur); backdrop-filter: var(--blur);
   font-size: 24px; font-weight: 700; line-height: 1; cursor: pointer;
 }
-.btn-add:active { background: var(--accent-press); }
+/* 배경을 통째로 갈아끼우면 apple의 유리 레이어(그라데이션)가 눌린 순간 사라진다.
+   밝기만 낮추면 어느 테마든 쌓아둔 층을 그대로 두고 눌린 느낌만 준다.
+   0.82 = --accent(명도 50%) → --accent-press(41%)와 같은 정도. */
+.btn-add:active { filter: brightness(0.82); }
 
 /** 하단 밑바탕(시각 효과용) **/
 .bottom-bg {
