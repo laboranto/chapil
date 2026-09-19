@@ -9,52 +9,186 @@
   transition-duration: 0.22s;
   -webkit-tap-highlight-color: transparent;
 }
+/* ── 디자인 토큰 ──────────────────────────────────────────────────────
+   OS를 판별해 <html data-theme>에 breeze | material | apple 중 하나를 찍고
+   (src/theme.js, main.jsx에서 동기 실행) 그 값에 따라 토큰 세트를 갈아끼운다.
+   레이아웃은 한 가지로 고정이고, 테마는 색·모서리·그림자·블러만 바꾼다.
+
+   블록마다 토큰을 전량 선언한다 — 차이나는 것만 쓰면 빠뜨린 토큰이 조용히
+   다른 테마 값으로 떨어진다. token-parity.test.js가 6블록의 토큰 집합이
+   같은지 검사한다.
+
+   기준값 출처: Material 3 = androidx PaletteTokens.kt / m3.material.io,
+   Apple = HIG(값은 근사. HIG는 하드코딩을 만류하나 웹에는 시스템 색 API가 없다),
+   Breeze = KDE/breeze colors + KDE/kirigami units.cpp
+   ────────────────────────────────────────────────────────────────── */
+
+/* 구조 토큰 — 테마와 무관하다 */
 :root {
-  --surface: #ffffff;
-  --surface-variant: #ececec;
-  --surface-fade: rgba(255,255,255,0);
-  --blur: blur(2.5px);
-  --surface-elevated: rgba(255,255,255,0.75);
-  --state-hover: rgba(0,0,0,0.05);
-  --state-active: rgba(128,128,128,0.1);
-  --accent: rgba(32,128,225,0.75);
-  --accent-press: rgba(0,128,192,0.75);
-  --color-danger: #ff3b30;
-  --color-success: #188038;
-  --color-warning: #b06000;
-  --on-surface: #232323;
-  --on-surface-variant: #505050;
-  --outline: 1px solid rgba(128,128,128,0.25);
-  --outline-strong: 1px solid rgba(128,128,128,0.75);
-  --shadow: 0 0 5px 0 rgba(0,0,0,0.15);
-  --shadow-hover: 0 0 10px 0 rgba(0,0,0,0.2);
-  --shadow-active: 0 0 5px 0 rgba(0,0,0,0.25);
-  --radius-sm: 10px;
-  --radius-lg: 32px;
   --size-nav: 64px;
+  --size-layout: 600px;
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
-  --size-layout: 600px;
 }
+
+/* ── Breeze (데스크탑 기본 / JS가 못 돌았을 때의 fallback) ── */
+:root, [data-theme="breeze"] {
+  --surface: #fcfcfc;
+  --surface-variant: #eff0f1;
+  --surface-fade: rgba(252,252,252,0);
+  --surface-elevated: rgba(239,240,241,0.92);
+  --state-hover: rgba(61,174,233,0.12);
+  --state-active: rgba(61,174,233,0.22);
+  --accent: #3daee9;
+  --accent-press: #2a92c9;
+  --on-accent: #ffffff;
+  --color-danger: #da4453;
+  --color-success: #27ae60;
+  --color-warning: #f67400;
+  --on-surface: #232629;
+  --on-surface-variant: #707d8a;
+  --outline: 1px solid rgba(112,125,138,0.3);
+  --outline-strong: 1px solid rgba(112,125,138,0.7);
+  --shadow: 0 1px 3px rgba(0,0,0,0.12);
+  --shadow-hover: 0 2px 6px rgba(0,0,0,0.16);
+  --shadow-active: 0 1px 2px rgba(0,0,0,0.2);
+  --radius-sm: 5px;   /* kirigami cornerRadius */
+  --radius-lg: 5px;   /* Breeze는 알약 모양을 쓰지 않는다 */
+  --blur: blur(4px);
+}
+
+/* ── Material 3 (Android) ── */
+[data-theme="material"] {
+  --surface: #fef7ff;              /* Neutral98 */
+  --surface-variant: #e7e0ec;      /* NeutralVariant90 */
+  --surface-fade: rgba(254,247,255,0);
+  --surface-elevated: rgba(243,237,247,0.94);  /* surfaceContainer Neutral94 */
+  --state-hover: rgba(103,80,164,0.08);
+  --state-active: rgba(103,80,164,0.12);
+  --accent: #6750a4;               /* Primary40 */
+  --accent-press: #4f378b;
+  --on-accent: #ffffff;
+  --color-danger: #b3261e;         /* Error40 */
+  --color-success: #2e7d32;        /* M3 baseline에 success 롤이 없어 근사 */
+  --color-warning: #825500;
+  --on-surface: #1d1b20;           /* Neutral10 */
+  --on-surface-variant: #49454f;   /* NeutralVariant30 */
+  --outline: 1px solid #cac4d0;    /* outlineVariant */
+  --outline-strong: 1px solid #79747e;  /* outline */
+  --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 1px 3px 1px rgba(0,0,0,0.15);
+  --shadow-hover: 0 1px 2px rgba(0,0,0,0.3), 0 2px 6px 2px rgba(0,0,0,0.15);
+  --shadow-active: 0 1px 2px rgba(0,0,0,0.3), 0 1px 3px rgba(0,0,0,0.15);
+  --radius-sm: 12px;  /* medium */
+  --radius-lg: 28px;  /* extra large */
+  --blur: blur(6px);
+}
+
+/* ── Apple Liquid Glass (iOS / iPadOS / macOS) ──
+   HIG: Liquid Glass는 컨트롤·내비 레이어 전용이다. --blur와
+   --surface-elevated를 콘텐츠 레이어에 바르지 말 것. */
+[data-theme="apple"] {
+  --surface: #ffffff;              /* systemBackground */
+  --surface-variant: #f2f2f7;      /* secondarySystemBackground */
+  --surface-fade: rgba(255,255,255,0);
+  --surface-elevated: rgba(255,255,255,0.7);
+  --state-hover: rgba(0,0,0,0.04);
+  --state-active: rgba(0,0,0,0.08);
+  --accent: #007aff;               /* systemBlue */
+  --accent-press: #0060df;
+  --on-accent: #ffffff;
+  --color-danger: #ff3b30;
+  --color-success: #34c759;
+  --color-warning: #ff9500;
+  --on-surface: #000000;
+  --on-surface-variant: rgba(60,60,67,0.6);   /* secondaryLabel */
+  --outline: 1px solid rgba(198,198,200,0.55);  /* separator */
+  --outline-strong: 1px solid #c6c6c8;
+  --shadow: 0 2px 10px rgba(0,0,0,0.08);
+  --shadow-hover: 0 4px 16px rgba(0,0,0,0.12);
+  --shadow-active: 0 1px 4px rgba(0,0,0,0.1);
+  --radius-sm: 10px;
+  --radius-lg: 26px;
+  --blur: blur(20px) saturate(180%);
+}
+
 @media (prefers-color-scheme: dark) {
-:root {
-  --surface: #151515;
-  --surface-variant: #383838;
-  --surface-fade: rgba(21,21,21,0);
-  --blur: blur(2.5px);
-  --surface-elevated: rgba(32,32,32,0.9);
-  --state-hover: rgba(255,255,255,0.05);
-  --state-active: rgba(128,128,128,0.25);
-  --accent: rgba(32,168,255,0.75);
-  --accent-press: rgba(32,128,192,0.75);
-  --color-danger: #ffa558;
-  --color-success: #4b9476;
-  --color-warning: #a18d70;
-  --on-surface: #ffffff;
-  --on-surface-variant: #cccccc;
-  --outline: 1px solid rgba(96,96,96,0.25);
-  --outline-strong: 1px solid rgba(96,96,96,1);
+
+/* :root만 쓰면 data-theme이 찍혀 있어도 매칭되어 라이트 값을 덮어쓴다 */
+:root:not([data-theme]), [data-theme="breeze"] {
+  --surface: #141618;
+  --surface-variant: #202326;
+  --surface-fade: rgba(20,22,24,0);
+  --surface-elevated: rgba(32,35,38,0.92);
+  --state-hover: rgba(61,174,233,0.18);
+  --state-active: rgba(61,174,233,0.3);
+  --accent: #3daee9;               /* Breeze는 강조·상태색이 모드 불문 동일 */
+  --accent-press: #2a92c9;
+  --on-accent: #ffffff;
+  --color-danger: #da4453;
+  --color-success: #27ae60;
+  --color-warning: #f67400;
+  --on-surface: #fcfcfc;
+  --on-surface-variant: #a1a9b1;
+  --outline: 1px solid rgba(161,169,177,0.25);
+  --outline-strong: 1px solid rgba(161,169,177,0.6);
+  --shadow: 0 1px 3px rgba(0,0,0,0.4);
+  --shadow-hover: 0 2px 6px rgba(0,0,0,0.5);
+  --shadow-active: 0 1px 2px rgba(0,0,0,0.6);
+  --radius-sm: 5px;
+  --radius-lg: 5px;
+  --blur: blur(4px);
 }
+
+[data-theme="material"] {
+  --surface: #141218;              /* Neutral6 */
+  --surface-variant: #36343b;      /* surfaceContainerHighest. NeutralVariant30(#49454f)은 입력 필드엔 밝다 */
+  --surface-fade: rgba(20,18,24,0);
+  --surface-elevated: rgba(33,31,38,0.96);  /* surfaceContainer Neutral12 */
+  --state-hover: rgba(208,188,255,0.08);
+  --state-active: rgba(208,188,255,0.12);
+  --accent: #d0bcff;               /* Primary80 */
+  --accent-press: #b69df8;
+  --on-accent: #381e72;            /* Primary20 — 밝은 보라 위에 흰 글씨는 안 된다 */
+  --color-danger: #f2b8b5;         /* Error80 */
+  --color-success: #81c784;
+  --color-warning: #e0b44c;
+  --on-surface: #e6e0e9;           /* Neutral90 */
+  --on-surface-variant: #cac4d0;   /* NeutralVariant80 */
+  --outline: 1px solid #49454f;    /* outlineVariant */
+  --outline-strong: 1px solid #938f99;  /* outline */
+  --shadow: 0 1px 2px rgba(0,0,0,0.5), 0 1px 3px 1px rgba(0,0,0,0.3);
+  --shadow-hover: 0 1px 2px rgba(0,0,0,0.5), 0 2px 6px 2px rgba(0,0,0,0.3);
+  --shadow-active: 0 1px 2px rgba(0,0,0,0.5), 0 1px 3px rgba(0,0,0,0.3);
+  --radius-sm: 12px;
+  --radius-lg: 28px;
+  --blur: blur(6px);
+}
+
+[data-theme="apple"] {
+  --surface: #000000;
+  --surface-variant: #1c1c1e;
+  --surface-fade: rgba(0,0,0,0);
+  --surface-elevated: rgba(30,30,32,0.7);
+  --state-hover: rgba(255,255,255,0.06);
+  --state-active: rgba(255,255,255,0.12);
+  --accent: #0a84ff;
+  --accent-press: #409cff;
+  --on-accent: #ffffff;
+  --color-danger: #ff453a;
+  --color-success: #30d158;
+  --color-warning: #ff9f0a;
+  --on-surface: #ffffff;
+  --on-surface-variant: rgba(235,235,245,0.6);
+  --outline: 1px solid rgba(84,84,88,0.6);
+  --outline-strong: 1px solid #38383a;
+  --shadow: 0 2px 10px rgba(0,0,0,0.5);
+  --shadow-hover: 0 4px 16px rgba(0,0,0,0.6);
+  --shadow-active: 0 1px 4px rgba(0,0,0,0.55);
+  --radius-sm: 10px;
+  --radius-lg: 26px;
+  --blur: blur(20px) saturate(180%);
+}
+
 }
 
 body {
@@ -62,7 +196,7 @@ body {
   min-height: 100vh; background: var(--surface); color: var(--on-surface); 
 }
 a { color: inherit; text-decoration: none; }
-button{ backdrop-filter: var(--blur); box-shadow: var(--shadow); }
+button{ box-shadow: var(--shadow); }
 button:hover{ box-shadow: var(--shadow-hover); }
 button:active{ box-shadow: var(--shadow-active); }
 
@@ -214,6 +348,7 @@ li{
 .crop-btn-confirm {
   background: var(--accent);
   border-color: transparent;
+  color: var(--on-accent);
 }
 .crop-btn-confirm:hover { background: var(--accent-press); }
 .crop-uploading {
@@ -303,7 +438,7 @@ li{
   position: fixed; z-index: 100;
   right: 0;
   margin: 32px;
-  background: var(--accent); color: #ffffff; border: none;
+  background: var(--accent); color: var(--on-accent); border: none;
   width: 56px; height: 56px; border-radius: 50%;
   font-size: 24px; font-weight: 700; cursor: pointer;
 }
@@ -421,7 +556,7 @@ li{
 .summary-tiles { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
 .summary-tile {
   display: flex; justify-content: space-between; align-items: baseline;
-  background: var(--surface-elevated); border: var(--outline);
+  background: var(--surface-variant); border: var(--outline);
   border-radius: var(--radius-sm); padding: 9px 14px;
 }
 .summary-tile > span:first-child { font-size: 12px; color: var(--on-surface-variant); }
@@ -460,9 +595,11 @@ li{
 .more-dropdown button:last-child { color: var(--color-danger); }
 
 /* 카드 배지 */
-.badge { background: #e8f0fe; color: var(--accent); border-radius: calc(var(--radius-sm) / 5); padding: 1px 7px; font-size: 12px; font-weight: 700; letter-spacing: -0.05em; }
-.badge.green { background: #e6f4ea; color: var(--color-success); }
-.badge.orange { background: #fef3e2; color: var(--color-warning); }
+/* 배경을 글자색에서 뽑아 쓰면 테마·모드가 바뀌어도 따라온다.
+   (라이트 전용 하드코딩이라 다크에서 연한 배경이 그대로 남던 자리) */
+.badge { background: color-mix(in srgb, currentColor 14%, transparent); color: var(--accent); border-radius: calc(var(--radius-sm) / 5); padding: 1px 7px; font-size: 12px; font-weight: 700; letter-spacing: -0.05em; }
+.badge.green { color: var(--color-success); }
+.badge.orange { color: var(--color-warning); }
 
 .card-actions { position: absolute; right: 5px; bottom: 10px; margin-top: 10px; z-index: -1;}
 .btn-sm { border: none; box-shadow: none; padding: 6px 12px; margin: 0 2.5px; font-size: 13px; cursor: pointer; font-weight: 500; }
@@ -474,7 +611,7 @@ li{
 .form-group label { display: block; font-size: 14px; font-weight: 500; color: var(--on-surface-variant); margin-bottom: 5px; }
 .form-group input, .form-group select, .form-group textarea {
   width: 100%; padding: 10px 13px; border: var(--outline); border-radius: var(--radius-sm);
-  font-size: 16px; background: var(--surface-elevated); color: var(--on-surface); outline: none;
+  font-size: 16px; background: var(--surface-variant); color: var(--on-surface); outline: none;
   -webkit-appearance: none; appearance: none;
 }
 .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--accent); }
@@ -491,8 +628,8 @@ li{
 .btn-submit::after {
   content: '';
   width: 8px; height: 14px;
-  border-right: 2.5px solid #ffffff;
-  border-bottom: 2.5px solid #ffffff;
+  border-right: 2.5px solid var(--on-accent);
+  border-bottom: 2.5px solid var(--on-accent);
   transform: rotate(45deg) translate(-1px, -2px);
 }
 .btn-submit:active { background: var(--accent-press); }
@@ -506,7 +643,7 @@ li{
 
 /*** 요약 배너 (사용 안 함)(deprecated)
 .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 10px auto; }
-.summary-card { background: var(--surface-elevated); border-radius: var(--radius-sm); padding: 14px; box-shadow: 0 1px 3px rgba(0,0,0,.07); }
+.summary-card { background: var(--surface-variant); border-radius: var(--radius-sm); padding: 14px; box-shadow: 0 1px 3px rgba(0,0,0,.07); }
 .summary-card .label { font-size: 12px; color: var(--on-surface-variant); margin-bottom: 4px; }
 .summary-card .value { font-size: 20px; font-weight: 700; }
 .summary-card .unit { font-size: 13px; color: var(--on-surface-variant); font-weight: 400; }
@@ -566,11 +703,11 @@ li{
 .segment-tab {
   flex: 1; display: flex; align-items: center; justify-content: center; gap: 5px;
   padding: 8px 0; border: none; border-radius: var(--radius-sm);
-  background: var(--surface-elevated); color: var(--on-surface-variant);
+  background: var(--surface-variant); color: var(--on-surface-variant);
   font-size: 13px; font-weight: 500;
 }
 .segment-tab svg { width: 16px; height: 16px; }
-.segment-tab.active { background: var(--accent); color: #fff; }
+.segment-tab.active { background: var(--accent); color: var(--on-accent); }
 
 /* 섹션 제목과 꼬릿말, 도움말 */
 .section-header, .section-footer, .section-advice{ 
@@ -603,7 +740,7 @@ li{
   width: 100%; box-sizing: border-box;
   padding: 12px; border: var(--outline);
   border-radius: var(--radius-sm);
-  background: var(--surface-elevated); color: var(--on-surface);
+  background: var(--surface-variant); color: var(--on-surface);
   font-size: 15px; line-height: 1.6; resize: none;
 }
 .feedback-notice {
@@ -687,7 +824,7 @@ li{
 .onboarding-arrow-btn:active { background: var(--state-active); }
 .onboarding-btn {
   padding: 14px 36px;
-  background: var(--accent); color: #ffffff;
+  background: var(--accent); color: var(--on-accent);
   border: none; border-radius: var(--radius-lg);
   font-size: 16px; font-weight: 600; cursor: pointer;
   white-space: nowrap;

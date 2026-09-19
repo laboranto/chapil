@@ -7,6 +7,11 @@ import { initDB, getDB } from './db.js'
 import { initImages, api } from './api.js'
 import { maybeAutoBackup } from './recovery.js'
 import './logger.js'
+import { detectTheme } from './theme.js'
+
+// DB 초기화가 끝나야 React가 뜨는데 그게 수백 ms다. 그 전에 body가
+// var(--surface)로 칠해지므로 테마는 여기서 동기로 찍어야 한다.
+document.documentElement.dataset.theme = detectTheme()
 
 async function maybeSeedDemo() {
   // 네이티브 앱(Capacitor)에는 데모 시드용 백엔드가 없다. 로컬 서버가 미상 경로에

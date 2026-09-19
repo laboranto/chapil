@@ -38,9 +38,8 @@ chapil/
 │   │   └── index.css         # 전역 스타일
 │   └── public/               # PWA manifest, 아이콘
 ├── docs/
-│   └── tokens/               # 디자인 토큰 인터랙티브 참조 페이지
-│       ├── index.html
-│       └── index.css
+│   └── tokens/               # 디자인 토큰 참조 페이지 (index.css를 읽어 테마 3종 비교)
+│       └── index.html
 ├── android/                  # Capacitor Android 프로젝트
 ├── ios/                      # Capacitor iOS 프로젝트
 ├── assets/                   # 앱 아이콘 및 스플래시 이미지 원본
