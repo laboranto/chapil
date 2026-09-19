@@ -59,7 +59,7 @@ const MaintenanceForm = forwardRef(function MaintenanceForm({ mode = 'standalone
     }
     if (isEdit) await api.updateMaintenance(id, body)
     else        await api.createMaintenance(body)
-    navigate('/records')
+    navigate('/')
   }
 
   useImperativeHandle(ref, () => ({
@@ -73,7 +73,7 @@ const MaintenanceForm = forwardRef(function MaintenanceForm({ mode = 'standalone
       {mode === 'standalone' && (
         <>
           <div className="topbar">
-            <button type="button" className="btn-cancel" aria-label="취소" onClick={() => navigate('/records')}>✕</button>
+            <button type="button" className="btn-cancel" aria-label="취소" onClick={() => navigate('/')}>✕</button>
             <button type="submit" className="btn-submit" aria-label="저장"></button>
           </div>
           <div className="topbg"></div>

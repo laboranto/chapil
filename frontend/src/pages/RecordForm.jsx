@@ -28,7 +28,7 @@ export default function RecordForm() {
   return (
     <div>
       <div className="topbar">
-        <button type="button" className="btn-cancel" aria-label="취소" onClick={() => navigate('/records')}>✕</button>
+        <button type="button" className="btn-cancel" aria-label="취소" onClick={() => navigate('/')}>✕</button>
         <button type="submit" form="record-form" className="btn-submit" aria-label="저장"></button>
       </div>
       <div className="topbg"></div>

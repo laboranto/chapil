@@ -422,21 +422,6 @@ li{
   backdrop-filter: var(--blur);
   pointer-events: none;
 }
-/** 하단에 표시되는 작성 버튼 **/
-.btn-add {
-  position: fixed; z-index: 100;
-  right: 0;
-  margin: 32px;
-  background: var(--accent); color: var(--on-accent); border: none;
-  width: 56px; height: 56px; border-radius: 50%;
-  font-size: 24px; font-weight: 700; cursor: pointer;
-}
-@media (max-width: 700px) {
-  .btn-add { bottom: calc(var(--safe-bottom) + var(--size-nav)); }
-}
-@media (min-width: 701px) {
-  .btn-add { bottom: var(--safe-bottom); }
-}
 
 /*** 본문 페이지 ***/
 .content {
@@ -538,8 +523,43 @@ li{
 }
 .preview-counts b{ font-weight: 900; }
 
+/*** 요약 카드 — 상단 고정, 스크롤하면 축약 ***/
+/* sentinel은 헤더보다 위에 있어 헤더가 줄어도 제자리다(경계 진동 방지).
+   높이 40px이 곧 "축약이 시작되는 스크롤량". */
+.collapse-sentinel { height: 40px; margin-bottom: -40px; pointer-events: none; }
+/* 상단 여백을 .content가 아니라 헤더가 직접 가진다. top:0으로 붙어야 safe-area
+   구간까지 헤더가 덮고, 그 틈으로 스크롤되는 카드가 비치지 않는다. */
+.content.main-page { padding-top: 0; }
+.summary-header {
+  position: sticky; z-index: 95; top: 0;
+  padding-top: calc(var(--safe-top) + 8px);
+  background: var(--surface);
+}
+.summary-header.collapsed { box-shadow: var(--shadow); }
+.summary-header .identity-block,
+.summary-header .car-thumb-btn,
+.summary-header .car-thumb,
+.summary-header .car-thumb-btn svg { transition: width .15s ease, height .15s ease, padding .15s ease; }
+/* 축약: 제원 줄과 타일 라벨을 떨구고, 세 타일을 한 줄로 눕힌다 */
+.collapsed .identity-block { padding-bottom: 8px; }
+.collapsed .identity-spec { display: none; }
+.collapsed .car-thumb-btn,
+.collapsed .car-thumb,
+.collapsed .car-thumb-btn svg { width: 28px; height: 28px; }
+.collapsed .identity-name { font-size: 15px; }
+.collapsed .summary-tiles { flex-direction: row; }
+.collapsed .summary-tile { flex: 1; justify-content: center; padding: 6px 8px; }
+.collapsed .summary-tile > span:first-child { display: none; }
+
 /*** 차량 정체성 블록 ***/
 .identity-block { display: flex; align-items: center; gap: 13px; padding: 4px 2px 16px; }
+.identity-text { flex: 1; min-width: 0; }
+.settings-btn {
+  display: flex; flex-shrink: 0; padding: 10px;   /* 44px 터치 타깃 — 설정으로 가는 유일한 경로다 */
+  border-radius: 50%; color: var(--on-surface-variant);
+}
+.settings-btn svg { width: 24px; height: 24px; }
+.settings-btn:hover { background: var(--state-hover); }
 .identity-name { font-size: 17px; font-weight: 600; }
 .identity-spec { font-size: 12px; color: var(--on-surface-variant); margin-top: 2px; }
 .summary-tiles { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
@@ -637,27 +657,19 @@ li{
 /*** 하단 탭바 ***/
 .bottom-nav {
   position: fixed; display: flex; z-index: 200;
-  width: 240px; max-width: 500px;
-  bottom: 12px; height: var(--size-nav);
-  padding: 2px;
+  left: 50%; transform: translate(-50%, 0);
+  bottom: 12px; margin-bottom: var(--safe-bottom);
+  padding: 8px;   /* 48px 버튼 + 8px*2 = --size-nav(64px). .bottom-bg 높이와 맞물린다 */
   border: var(--outline); border-radius: var(--radius-lg);
   background: var(--surface-elevated); box-shadow: var(--shadow);
   backdrop-filter: var(--blur);
-  margin-bottom: var(--safe-bottom);
 }
-.bottom-nav { transform: translate(-50%, 0); left: 50%; }
-.nav-item {
-  flex: 1; display: flex; flex-direction: column;
-  height: calc(var(--size-nav) - 8px); align-items: center; justify-content: center;
-  margin: auto 2px; border-radius: calc(var(--radius-lg) - 3px);
-  color: var(--on-surface-variant); font-size: 10px; font-weight: 500;
+.btn-add {
+  width: 48px; height: 48px; border: none; border-radius: 50%;
+  background: var(--accent); color: var(--on-accent);
+  font-size: 24px; font-weight: 700; line-height: 1; cursor: pointer;
 }
-.nav-item:hover { background-color: var(--state-hover); }
-.nav-item.active { color: var(--accent); background-color: var(--state-active); }
-.nav-item svg {
-  width: 26px; height: 26px;
-  margin: 0 auto; background: none;
-}
+.btn-add:active { background: var(--accent-press); }
 
 /** 하단 밑바탕(시각 효과용) **/
 .bottom-bg {
@@ -673,9 +685,7 @@ li{
   display: flex; gap: 4px; padding: 6px;
   background: var(--surface); z-index: 90;
 }
-.segment-tabs.records-tabs {
-  position: sticky; top: calc(var(--safe-top) + 8px);
-}
+.segment-tabs.records-tabs { padding: 6px 0; }
 .segment-tabs.form-tabs {
   position: sticky;
   max-width: var(--size-layout);

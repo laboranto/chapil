@@ -1,15 +1,12 @@
-import { NavLink } from 'react-router-dom'
-import HomeIcon     from '../assets/symbols/home.svg?react'
-import RecordsIcon  from '../assets/symbols/records.svg?react'
-import SettingsIcon from '../assets/symbols/settings.svg?react'
+import { useNavigate } from 'react-router-dom'
 
+// 탭 링크는 전부 걷어냈다(홈·기록 통합, 설정은 요약 카드 우상단으로).
+// 남은 건 하단 중앙의 기록 추가 버튼 하나뿐.
 export default function BottomNav() {
-  const cls = ({ isActive }) => 'nav-item' + (isActive ? ' active' : '')
+  const navigate = useNavigate()
   return (
     <nav className="bottom-nav">
-      <NavLink to="/" end className={cls}><HomeIcon />홈</NavLink>
-      <NavLink to="/records" className={cls}><RecordsIcon />기록</NavLink>
-      <NavLink to="/settings" className={cls}><SettingsIcon />설정</NavLink>
+      <button className="btn-add" aria-label="기록 추가" onClick={() => navigate('/records/new')}>+</button>
     </nav>
   )
 }

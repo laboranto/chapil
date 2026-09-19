@@ -1,13 +1,10 @@
-import { useState, useCallback } from 'react'
+import { useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { api } from '../api'
-import { useSettings } from '../context/SettingsContext'
-import { usePaginatedList } from '../hooks/usePaginatedList'
-import SegmentTabs from '../components/SegmentTabs'
-import FuelCard from '../components/records/FuelCard'
-import MaintenanceCard from '../components/records/MaintenanceCard'
-import OtherCard from '../components/records/OtherCard'
-import { getRecordType } from '../components/records/recordType'
+import { api } from '../../api'
+import { usePaginatedList } from '../../hooks/usePaginatedList'
+import FuelCard from './FuelCard'
+import MaintenanceCard from './MaintenanceCard'
+import OtherCard from './OtherCard'
 
 const CARD = { fuel: FuelCard, maintenance: MaintenanceCard, other: OtherCard }
 const EDIT_PATH = {
@@ -17,7 +14,7 @@ const EDIT_PATH = {
 }
 const DELETE_API = { fuel: api.deleteFuel, maintenance: api.deleteMaintenance, other: api.deleteOther }
 
-function RecordsList({ filter }) {
+export default function RecordsList({ filter }) {
   const navigate = useNavigate()
   const fetchPage = useCallback(
     ({ cursor }) => api.getRecordsPage({ cursor, filter }),
@@ -48,30 +45,6 @@ function RecordsList({ filter }) {
         )
       })}
       {hasMore && <div ref={sentinelRef} style={{ height: 1 }} />}
-    </>
-  )
-}
-
-export default function Records() {
-  const navigate = useNavigate()
-  const { fuelTerm } = useSettings()
-  const [filter, setFilter] = useState(null)
-
-  const options = ['fuel', 'maintenance', 'other'].map(key => ({ key, ...getRecordType(key, fuelTerm) }))
-
-  return (
-    <>
-      <button className="btn-add" onClick={() => navigate('/records/new')}>+</button>
-      <div className="content no-topbar">
-        <SegmentTabs
-          className="records-tabs"
-          options={options}
-          value={filter}
-          onChange={setFilter}
-          allowDeselect
-        />
-        <RecordsList key={filter ?? 'all'} filter={filter} />
-      </div>
     </>
   )
 }

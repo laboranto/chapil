@@ -57,7 +57,7 @@ const OtherForm = forwardRef(function OtherForm({ mode = 'standalone' }, ref) {
     }
     if (isEdit) await api.updateOther(id, body)
     else        await api.createOther(body)
-    navigate('/records')
+    navigate('/')
   }
 
   useImperativeHandle(ref, () => ({
@@ -71,7 +71,7 @@ const OtherForm = forwardRef(function OtherForm({ mode = 'standalone' }, ref) {
       {mode === 'standalone' && (
         <>
           <div className="topbar">
-            <button type="button" className="btn-cancel" aria-label="취소" onClick={() => navigate('/records')}>✕</button>
+            <button type="button" className="btn-cancel" aria-label="취소" onClick={() => navigate('/')}>✕</button>
             <button type="submit" className="btn-submit" aria-label="저장"></button>
           </div>
           <div className="topbg"></div>

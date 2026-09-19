@@ -1,11 +1,14 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { Link } from 'react-router-dom'
 import { api } from '../api'
 import { useSettings } from '../context/SettingsContext'
+import { useCollapseOnScroll } from '../hooks/useCollapseOnScroll'
 import Cropper from 'react-easy-crop'
 import CarIcon from '../assets/symbols/car.svg?react'
-import FuelCard from '../components/records/FuelCard'
-import MaintenanceCard from '../components/records/MaintenanceCard'
-import OtherCard from '../components/records/OtherCard'
+import SettingsIcon from '../assets/symbols/settings.svg?react'
+import SegmentTabs from '../components/SegmentTabs'
+import RecordsList from '../components/records/RecordsList'
+import { getRecordType } from '../components/records/recordType'
 
 async function getCroppedBlob(imageSrc, pixelCrop) {
   return new Promise((resolve) => {
@@ -103,7 +106,7 @@ export default function Home() {
   }
 
 // Settings.jsx에서 사용자가 입력한 차량 정보를 가져옴
-const { settings, options } = useSettings()
+const { settings, options, fuelTerm } = useSettings()
 const carTypeLabel = options.car_type.find(o => o.code === settings.car_type)?.label ?? ''
 const fuelOption   = options.car_fuel.find(o => o.code === settings.car_fuel)
 const carFuelLabel = fuelOption?.label        ?? ''
@@ -111,6 +114,10 @@ const carFuelLabel = fuelOption?.label        ?? ''
 // '주유' 또는 '충전', 'km/L' 또는 'km/kWh', '연비' 또는 '전비'
 const economyUnit  = fuelOption?.economy_unit  ?? 'km/L'
 const economyLabel = fuelOption?.economy_label ?? '연비'
+
+  const [filter, setFilter] = useState(null)
+  const { collapsed, sentinelRef } = useCollapseOnScroll()
+  const tabOptions = ['fuel', 'maintenance', 'other'].map(key => ({ key, ...getRecordType(key, fuelTerm) }))
 
   // useEffect: 컴포넌트가 처음 화면에 나타날 때 한 번 실행된다.
   // 두 번째 인자 []는 "의존성 배열"로, 빈 배열이면 마운트 시 딱 한 번만 실행.
@@ -189,41 +196,27 @@ const economyLabel = fuelOption?.economy_label ?? '연비'
           {[settings.car_plate, settings.car_birth?.slice(0, 4), carTypeLabel, carFuelLabel].filter(Boolean).join(' · ')}
         </div>
       </div>
+      <Link to="/settings" className="settings-btn" aria-label="설정"><SettingsIcon /></Link>
     </div>
-  )
-
-  if (!data) return (
-    <>
-      <div className="content no-topbar">
-        {identityBlock}
-        <div className="empty">불러오는 중…</div>
-      </div>
-      {carImageModal}
-      <input ref={imgInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFileSelect} />
-      {cropModal}
-    </>
   )
 
   return (
     <>
-      <div className="content no-topbar">
-        {identityBlock}
+      <div className="content main-page">
+        {/* 헤더보다 앞(위)에 있어야 헤더가 줄어도 안 밀린다. 높이 40px = 축약 시작 지점 */}
+        <div ref={sentinelRef} className="collapse-sentinel" />
 
-        <div className="summary-tiles">
-          <div className="summary-tile"><span>한 달 지출</span><span><b>{fmt(data.cost_last_30d ?? 0)}</b> 원</span></div>
-          <div className="summary-tile"><span>평균 {economyLabel}</span><span><b>{data.avg_economy ?? '-'}</b> {economyUnit}</span></div>
-          <div className="summary-tile"><span>총 주행거리</span><span><b>{data.latest_odometer ? fmt(data.latest_odometer) : '-'}</b> km</span></div>
-        </div>
+        <header className={'summary-header' + (collapsed ? ' collapsed' : '')}>
+          {identityBlock}
+          <div className="summary-tiles">
+            <div className="summary-tile"><span>한 달 지출</span><span><b>{data ? fmt(data.cost_last_30d ?? 0) : '-'}</b> 원</span></div>
+            <div className="summary-tile"><span>평균 {economyLabel}</span><span><b>{data?.avg_economy ?? '-'}</b> {economyUnit}</span></div>
+            <div className="summary-tile"><span>총 주행거리</span><span><b>{data?.latest_odometer ? fmt(data.latest_odometer) : '-'}</b> km</span></div>
+          </div>
+          <SegmentTabs className="records-tabs" options={tabOptions} value={filter} onChange={setFilter} allowDeselect />
+        </header>
 
-        {data.recent?.length > 0 && (
-          <>
-            <div className="section-header">최근 기록</div>
-            {data.recent.map(r => {
-              const Card = { fuel: FuelCard, maintenance: MaintenanceCard, other: OtherCard }[r.src]
-              return <Card key={`${r.src}-${r.id}`} record={r} />
-            })}
-          </>
-        )}
+        <RecordsList key={filter ?? 'all'} filter={filter} />
       </div>
       {carImageModal}
       <input ref={imgInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFileSelect} />
