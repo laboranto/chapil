@@ -17,15 +17,27 @@ export default function Sheet({ children }) {
   useLayoutEffect(() => {
     ref.current.showModal()
     // showModal()은 iOS Safari에서 배경 스크롤을 막아주지 않는다.
-    // overflow:hidden을 걸면 iOS가 스크롤 위치를 잃으므로 되돌려준다.
+    //
+    // overflow:hidden만으로 잠그면 iOS가 스크롤 위치를 잃고 배경이 맨 위로
+    // 튀어오른다. 그건 Safari 입장에서 "위로 스크롤"이라 접혀 있던 하단 바를
+    // 도로 펼치고, 그동안 뷰포트 높이가 계단식으로 변한다 — 시트가 앉을
+    // 바닥선이 올라오는 도중에 움직이니 통통 튄다. 그래서 시트를 띄운 직후가
+    // 아니라 "한 번이라도 스크롤한 뒤"부터 증상이 나왔다.
+    //
+    // position:fixed + top:-y로 잠그면 배경이 있던 자리에 그대로 멎는다.
+    // 스크롤이 움직이지 않으니 바도 안 움직이고, 뷰포트 높이가 고정된다.
     const y = window.scrollY
     // 스크롤바가 사라진 만큼 배경도 옆으로 밀린다. 그 폭을 패딩으로 상쇄한다.
     // 겹쳐 뜨는 오버레이 스크롤바(모바일)에서는 0이라 아무 일도 안 한다.
     const gap = window.innerWidth - document.documentElement.clientWidth
-    document.body.style.overflow = 'hidden'
+    document.body.style.position = 'fixed'
+    document.body.style.top = `-${y}px`
+    document.body.style.width = '100%'
     if (gap) document.body.style.paddingRight = `${gap}px`
     return () => {
-      document.body.style.overflow = ''
+      document.body.style.position = ''
+      document.body.style.top = ''
+      document.body.style.width = ''
       document.body.style.paddingRight = ''
       window.scrollTo(0, y)
     }
