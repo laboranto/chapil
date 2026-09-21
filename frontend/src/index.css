@@ -733,7 +733,16 @@ li{
      하려면 cubic-bezier(0.2, 0.9, 0.2, 1)쯤으로 이 한 줄만 바꾸면 된다. */
   --sheet-curve: ease-out;
   border: none; padding: 0; background: none;
+  /* clip은 hidden과 달리 스크롤 컨테이너 자체를 만들지 않는다 — 그게 요점이다.
+     showModal()은 시트 안 첫 포커스 요소(취소 버튼)를 잡는데, 그 순간 시트는
+     아직 화면 밖(translateY 100%)이라 브라우저가 그 요소를 보이게 하려고
+     dialog를 통째로 489px(실측) 스크롤해 버린다. 시트는 화면 밖이 아니라
+     반쯤 올라온 자리에서 출발했다가, 애니메이션이 끝나는 동안 스크롤이 도로
+     풀리며 흔들린다 — 통통 튀는 정체가 이거다. 스크롤할 수 없으면 안 흔들린다.
+     hidden은 Safari 15.x 폴백이다(clip은 16+). 여기 말고 시트 안쪽 스크롤은
+     .sheet가 따로 쥔다. */
   overflow: hidden;
+  overflow: clip;
   width: 100%; max-width: none; height: 100%; max-height: none;
 }
 .sheet-dialog[open] { display: flex; justify-content: center; align-items: flex-end; }
@@ -773,17 +782,9 @@ li{
      그냥 돌고, 미지원이어도 "애니메이션만 없고 시트는 뜬다"로 떨어진다. */
   animation: sheet-up var(--sheet-dur) var(--sheet-curve);
 }
-/* 들어올 거리가 퍼센트가 아니라 고정 길이인 이유 — 퍼센트 transform은 자기 박스
-   높이를 매 프레임 다시 잰다. 시트를 여는 그 프레임에 Sheet.jsx가 body를
-   overflow:hidden으로 잠그고, 그게 iOS Safari의 URL 바를 도로 펼치는 방아쇠다.
-   바가 움직이면 뷰포트 높이가 계단식으로 변하고, 높이 상한에 걸려 있는 시트는
-   그때마다 박스가 줄어 100%의 절대 픽셀이 같이 줄어든다 — 올라오던 시트가
-   그만큼 아래로 채였다 다시 올라오길 반복한다. 그게 통통 튀는 정체다.
-   92svh는 max-height와 같은 값이라 어떤 시트든 반드시 화면 밖에서 출발하고,
-   svh는 작은 뷰포트라 바가 어떻게 움직여도 고정이다.
-   나가는 쪽은 100% 그대로다 — 그때는 박스가 이미 안정돼 있고, 짧은 시트가
-   화면을 떠난 뒤에도 애니메이션이 안 끝나 라우트가 늦게 도는 걸 피한다. */
-@keyframes sheet-up { from { transform: translateY(92svh); } }
+/* 퍼센트는 자기 박스 높이라, 바닥에 붙어 있는 시트는 어떤 높이든 100%면
+   정확히 화면 밖에서 출발한다. 짧은 시트가 먼 데서 달려오지 않는다. */
+@keyframes sheet-up { from { transform: translateY(100%); } }
 
 /* 시트 안 페이지 크롬 — 뷰포트 고정을 전제로 쓰인 규칙들을 상자 안 흐름으로 되돌린다.
    딥링크·미지원 브라우저용 전체 페이지 렌더가 남아 있으므로 원래 규칙은 못 건드린다. */
