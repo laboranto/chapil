@@ -1,7 +1,7 @@
 *, *::before, *::after {
   box-sizing: border-box; margin: 0; padding: 0;
-  transition-timing-function: ease;
-  transition-duration: 0.22s;
+  transition-timing-function: ease-out;
+  transition-duration: 0.2s;
   -webkit-tap-highlight-color: transparent;
 }
 /* ── 디자인 토큰 ──────────────────────────────────────────────────────
